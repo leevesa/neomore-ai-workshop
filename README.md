@@ -2,7 +2,7 @@
 
 ![GitHub Copilot Vibe Coding Workshop](./images/banner.png)
 
-Let's vibe-code with [GitHub Copilot](https://docs.github.com/copilot/about-github-copilot/what-is-github-copilot) and its newest and greatest features in Java, as well as make the app cloud-native by containerization. Are you ready to jump in?
+Let's do agentic coding using [GitHub Copilot](https://docs.github.com/copilot/about-github-copilot/what-is-github-copilot) and its newest and greatest features in UI5, CAP and Java. Ready to jump in?
 
 ## Background
 
@@ -16,16 +16,9 @@ But here's the situation...
 - Add custom instruction to GitHub Copilot so that you have more control over GitHub Copilot.
 - Add various MCP servers to GitHub Copilot so that you build the applications more precisely.
 
-## Workshop in Your Language
-
-This workshop material is currently provided in the following languages:
-
-[English](./README.md) | [Español](./localisation/es-es/) | [Français](./localisation/fr-fr/) | [日本語](./localisation/ja-jp/) | [한국어](./localisation/ko-kr/) | [Português](./localisation/pt-br/) | [中文(简体)](./localisation/zh-cn/)
-
 ## Prerequisites
 
 This workshop is designed to run locally with Docker Compose.
-
 Before starting, make sure you've installed everything identified below.
 
 ### Run Locally with Docker Compose
@@ -60,26 +53,9 @@ docker compose -f complete/compose.yaml up --build -d
 ### Common
 
 - [Visual Studio Code](https://code.visualstudio.com/)
-- VS Code [GitHub Copilot](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot) Extension
-- VS Code [GitHub Copilot Chat](https://marketplace.visualstudio.com/items?itemName=GitHub.copilot-chat) Extension
-- 💥 For Windows users 👉 [PowerShell 7](https://learn.microsoft.com/powershell/scripting/install/installing-powershell)
 - [git CLI](https://git-scm.com/downloads)
-- [GitHub CLI](https://cli.github.com/)
 - [Docker Desktop](https://docs.docker.com/get-started/introduction/get-docker-desktop/)
 
-### Java
-
-- [SDKMAN](https://sdkman.io/)
-- [OpenJDK 21](https://learn.microsoft.com/java/openjdk/download) through SDKMAN
-- [Apache Maven](https://maven.apache.org/download.cgi) through SDKMAN
-- [Gradle Build Tool](https://docs.gradle.org/current/userguide/installation.html) through SDKMAN
-- [Spring Boot Initializr](https://docs.spring.io/spring-boot/cli/installation.html) through SDKMAN
-- VS Code [Extension Pack for Java](https://marketplace.visualstudio.com/items/?itemName=vscjava.vscode-java-pack) Extension
-- VS Code [Spring Boot Extension Pack](https://marketplace.visualstudio.com/items/?itemName=vmware.vscode-boot-dev-pack) Extension
-
-## Product Requirements Document
-
-First and foremost, the place for you to start is this [PRD (Product Requirements Document)](./product-requirements.md). This document will give you a better understanding of what to do and how to do it.
 
 ## Workshop Instructions
 
