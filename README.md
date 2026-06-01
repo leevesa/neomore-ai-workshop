@@ -1,4 +1,4 @@
-# GitHub Copilot Vibe Coding Workshop
+# Neomore GitHub Copilot Coding Workshop
 
 ![GitHub Copilot Vibe Coding Workshop](./images/banner.png)
 
@@ -24,13 +24,11 @@ This workshop material is currently provided in the following languages:
 
 ## Prerequisites
 
-During this workshop, [GitHub Codespaces](https://docs.github.com/en/codespaces/about-codespaces/what-are-codespaces) is highly recommended because there's no need for preparation, except a web browser.
+This workshop is designed to run locally with Docker Compose.
 
-[![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/microsoft/github-copilot-vibe-coding-workshop)
+Before starting, make sure you've installed everything identified below.
 
-However, if you really need to use your machine, make sure you've installed everything identified below.
-
-### Run Locally with Docker Compose (Alternative to Codespaces)
+### Run Locally with Docker Compose
 
 If you prefer a local containerized setup, use the files in the repository root.
 
@@ -104,7 +102,6 @@ Check out the complete example of each application. They're also vibe-coded with
 
 ## Read More...
 
-- [GitHub Codespaces](https://docs.github.com/en/codespaces/about-codespaces/what-are-codespaces)
 - [GitHub Copilot](https://docs.github.com/en/copilot/about-github-copilot/what-is-github-copilot)
 - [GitHub Copilot: Agent Mode](https://code.visualstudio.com/blogs/2025/04/07/agentMode)
 - [GitHub Copilot: MCP](https://code.visualstudio.com/blogs/2025/05/12/agent-mode-meets-mcp)
