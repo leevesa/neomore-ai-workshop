@@ -75,7 +75,7 @@ src/
 - ✅ Like/Unlike functionality
 - ✅ SQLite database with JPA/Hibernate
 - ✅ OpenAPI/Swagger documentation
-- ✅ CORS enabled for localhost and GitHub Codespaces
+- ✅ CORS enabled for local Docker/localhost usage
 - ✅ Dynamic server URL configuration
 - ✅ Health check endpoints
 - ✅ Spring Boot Actuator integration
@@ -275,17 +275,16 @@ springdoc.swagger-ui.operationsSorter=method
 
 ### CORS Configuration
 
-The application supports both localhost and GitHub Codespaces:
+The application supports local Docker/localhost access:
 
 - **Localhost**: `http://localhost:8080`
-- **GitHub Codespaces**: Auto-detected and configured dynamically
+- **Docker Host Access**: `http://localhost:8080`
 
 ### Environment Detection
 
-The application automatically detects the runtime environment:
+The application is configured for local runtime:
 
 - **Local Development**: Uses `http://localhost:8080`
-- **GitHub Codespaces**: Uses `https://{codespace-name}-8080.{domain}`
 
 ## Deployment
 
