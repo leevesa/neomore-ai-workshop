@@ -1,0 +1,18 @@
+services:
+  workshop:
+    build:
+      context: .
+      dockerfile: Dockerfile.workshop
+    container_name: copilot-workshop
+    user: root
+    working_dir: /workspaces/github-copilot-vibe-coding-workshop
+    command: sleep infinity
+    stdin_open: true
+    tty: true
+    volumes:
+      - .:/workspaces/github-copilot-vibe-coding-workshop
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      GH_TOKEN: ${GH_TOKEN:-}
+      GITHUB_TOKEN: ${GITHUB_TOKEN:-}
+      DOCKER_API_VERSION: "1.43"

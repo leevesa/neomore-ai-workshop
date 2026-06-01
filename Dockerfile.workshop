@@ -1,0 +1,28 @@
+FROM mcr.microsoft.com/devcontainers/base:ubuntu-24.04
+
+SHELL ["/bin/bash", "-o", "pipefail", "-c"]
+
+USER root
+
+# Ensure workshop toolchains are available locally without Codespaces.
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ca-certificates \
+      curl \
+      docker-compose-v2 \
+      docker.io \
+      gh \
+      git \
+      gnupg \
+      openjdk-21-jdk \
+      maven \
+      gradle \
+      sqlite3 && \
+    rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://deb.nodesource.com/setup_lts.x | bash - && \
+    apt-get install -y --no-install-recommends nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+USER vscode
+WORKDIR /workspaces/github-copilot-vibe-coding-workshop
