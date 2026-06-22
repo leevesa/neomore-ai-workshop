@@ -1,0 +1,26 @@
+services:
+  workshop-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workshop-hub
+    ports:
+      - "8080:8080"
+    environment:
+      # Optional shared password. When set, write endpoints and the dashboard
+      # require it. Leave empty/unset for an open local/dry-run hub.
+      WORKSHOP_PASSWORD: ${WORKSHOP_PASSWORD:-}
+      # Default session that is created and seeded with the task list on startup.
+      WORKSHOP_DEFAULT_SESSION: ${WORKSHOP_DEFAULT_SESSION:-demo}
+    networks:
+      - workshop
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 3s
+      start_period: 40s
+      retries: 3
+
+networks:
+  workshop:
+    driver: bridge

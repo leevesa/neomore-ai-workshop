@@ -1,0 +1,65 @@
+spring:
+  application:
+    name: workshophub
+  datasource:
+    url: jdbc:h2:mem:workshophub;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: ""
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        format_sql: false
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  mvc:
+    async:
+      # Keep SSE connections open effectively indefinitely (ms). -1 disables timeout.
+      request-timeout: -1
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
+
+# Workshop Hub specific configuration.
+# All values can be overridden with environment variables (Spring relaxed binding):
+#   WORKSHOP_PASSWORD, WORKSHOP_DEFAULTSESSIONID, WORKSHOP_SSEKEEPALIVESECONDS
+workshop:
+  # When set, write endpoints and the dashboard require the X-Workshop-Password header
+  # (or ?password= for the dashboard). When blank, the hub is fully open (local/dry-run).
+  password: ${WORKSHOP_PASSWORD:}
+  # Default session created and seeded with the canonical task list on startup.
+  default-session-id: ${WORKSHOP_DEFAULT_SESSION:demo}
+  # Interval for SSE keep-alive comments to prevent idle proxies from dropping the stream.
+  sse-keep-alive-seconds: 15
+  # Avatar upload constraints.
+  avatar:
+    # Maximum accepted avatar image size in bytes (default 512 KB).
+    max-bytes: ${WORKSHOP_AVATAR_MAX_BYTES:524288}
+  # Canonical workshop task list seeded for new sessions. Each task is verified
+  # server-side: the hub authors the task.completed event once it observes the
+  # real action, so clients never self-report progress.
+  seed-tasks:
+    - id: register
+      title: Register your team
+      description: Join the session with a team name in the chat app.
+    - id: chat
+      title: Post to the chatboard
+      description: Send your first message so the whole room can see it.
+    - id: feature-avatar
+      title: Add a team avatar
+      description: Upload a profile picture for your team.

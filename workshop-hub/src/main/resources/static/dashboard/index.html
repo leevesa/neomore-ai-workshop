@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Neomore Workshop Hub — Live Dashboard</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+    <header class="topbar">
+        <div class="brand">
+            <span class="logo">◆</span>
+            <div>
+                <h1>Workshop Hub</h1>
+                <p class="subtitle">Live participant feed</p>
+            </div>
+        </div>
+        <div class="session">
+            <span class="session-label">Session</span>
+            <span id="session-name" class="session-name">—</span>
+        </div>
+        <div class="heartbeats" title="Anonymous heartbeats received">
+            <span class="hb-icon">💓</span>
+            <span id="heartbeat-count" class="hb-count">0</span>
+        </div>
+        <div class="status">
+            <span id="status-dot" class="dot offline"></span>
+            <span id="status-text">Connecting…</span>
+        </div>
+    </header>
+
+    <main class="grid">
+        <section class="panel participants">
+            <h2>Participants <span id="participant-count" class="badge">0</span></h2>
+            <ul id="participant-list" class="participant-list">
+                <li class="empty">Waiting for participants to connect…</li>
+            </ul>
+        </section>
+
+        <section class="panel tasks">
+            <h2>Task progress</h2>
+            <ul id="task-list" class="task-list">
+                <li class="empty">Loading tasks…</li>
+            </ul>
+        </section>
+
+        <section class="panel feed">
+            <h2>Activity feed</h2>
+            <ul id="feed-list" class="feed-list">
+                <li class="empty">No activity yet.</li>
+            </ul>
+        </section>
+    </main>
+
+    <div id="celebration" class="celebration hidden">
+        <div class="celebration-card">
+            <span class="celebration-emoji">🎉</span>
+            <p id="celebration-text">Milestone reached!</p>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
