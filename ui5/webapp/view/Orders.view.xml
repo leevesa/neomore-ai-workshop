@@ -1,0 +1,132 @@
+<mvc:View
+    controllerName="fi.neomore.template.controller.Orders"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:filterbar="sap.ui.comp.filterbar"
+    xmlns="sap.m">
+    <Page
+        navButtonPress="onNavBack"
+        showNavButton="true"
+        title="{i18n>APP_TITLE}">
+        <content>
+            <filterbar:FilterBar search="onFilterBarSearch">
+                <filterbar:filterGroupItems>
+                    <filterbar:FilterGroupItem name="OrderId" label="OrderId" groupName="default" visibleInFilterBar="true">
+                        <filterbar:control>
+                            <Input value="{SearchParameters>/OrderId}" />                        
+                        </filterbar:control>
+                    </filterbar:FilterGroupItem>
+                    <filterbar:FilterGroupItem name="Description" label="Description" groupName="default" visibleInFilterBar="true">
+                        <filterbar:control>
+                            <Input value="{SearchParameters>/Description}" />                        
+                        </filterbar:control>
+                    </filterbar:FilterGroupItem>
+                </filterbar:filterGroupItems>
+            </filterbar:FilterBar>
+            <Table 
+                id="productsTable"
+                inset="false"
+                alternateRowColors="true"
+                items="{Orders>/Items}">
+                <headerToolbar>
+                    <Toolbar>
+                        <ToolbarSpacer />
+                        <Button
+                            icon="sap-icon://add"
+                            type="Accept"
+                            text="Create Order"
+                            press="onCreateOrderPress" />
+                    </Toolbar>
+                </headerToolbar>
+                <columns>
+                    <Column>
+                        <Text text="OrderId" />
+                    </Column>
+                    <Column>
+                        <Text text="Description" />
+                    </Column>
+                    <Column>
+                        <Text text="Workcenter" />
+                    </Column>
+                    <Column>
+                        <Text text="Plant" />
+                    </Column>
+                    <Column>
+                        <Text text="Priority" />
+                    </Column>
+                    <Column>
+                        <Text text="StartDate" />
+                    </Column>
+                    <Column>
+                        <Text text="FinishDate" />
+                    </Column>
+                    <Column>
+                        <Text text="FunctLoc" />
+                    </Column>
+                    <Column>
+                        <Text text="Equipment" />
+                    </Column>
+                    <Column>
+                        <Text text="NotifNo" />
+                    </Column>
+                    <Column>
+                        <Text text="RespPerson" />
+                    </Column>
+                    <Column>
+                        <Text text="Released" />
+                    </Column>
+                    <Column>
+                        <Text text="Completed" />
+                    </Column>
+                    <Column width="3rem">
+                        <Text text="Delete" visible="false" />
+                    </Column>
+                </columns>
+                <items>
+                    <ColumnListItem
+                        type="Navigation"
+                        press="onOrderPress"
+                        vAlign="Middle">
+                        <cells>
+                            <Text text="{Orders>OrderId}" />
+                            <Text text="{Orders>Description}" />
+                            <Text text="{parts: [
+                                {path: 'Orders>Workcenter'},
+                                {path: 'Orders>WorkcenterDescr'}
+                            ], formatter: '.formatterUtil.formatInputValue'}" />
+                            <Text text="{parts: [
+                                {path: 'Orders>Plant'},
+                                {path: 'Orders>PlantDescr'}
+                            ], formatter: '.formatterUtil.formatInputValue'}" />
+                            <Text text="{parts: [
+                                {path: 'Orders>Priority'},
+                                {path: 'Orders>PriorityDescr'}
+                            ], formatter: '.formatterUtil.formatInputValue'}" />
+                            <Text text="{path: 'Orders>StartDate', type: '.customTypesUtil.UTCDate'} {path: 'Orders>StartTime', type: '.customTypesUtil.EDMTime'}" />
+                            <Text text="{path: 'Orders>FinishDate', type: '.customTypesUtil.UTCDate'} {path: 'Orders>FinishTime', type: '.customTypesUtil.EDMTime'}" />
+                            <Text text="{parts: [
+                                {path: 'Orders>FunctLoc'},
+                                {path: 'Orders>FunctLocDescr'}
+                            ], formatter: '.formatterUtil.formatInputValue'}" />
+                            <Text text="{parts: [
+                                {path: 'Orders>Equipment'},
+                                {path: 'Orders>EquipmentDescr'}
+                            ], formatter: '.formatterUtil.formatInputValue'}" />
+                            <Text text="{Orders>NotifNo}" />
+                            <Text text="{parts: [
+                                {path: 'Orders>RespPerson'},
+                                {path: 'Orders>RespPersonName'}
+                            ], formatter: '.formatterUtil.formatInputValue'}" />
+                            <CheckBox selected="{Orders>Released}" enabled="false" />
+                            <CheckBox selected="{Orders>Completed}" enabled="false" />
+                            <Button
+                                icon="sap-icon://delete"
+                                type="Reject"
+                                press="onDeleteOrderPress"
+                                enabled="{= !${Orders>Released} &amp;&amp; !${Orders>Completed} }" />
+                        </cells>
+                    </ColumnListItem>
+                </items>
+            </Table>
+        </content>
+    </Page>
+</mvc:View>

@@ -1,0 +1,169 @@
+<mvc:View
+    controllerName="fi.neomore.template.controller.OrderDetails"
+    xmlns:mvc="sap.ui.core.mvc"
+    xmlns:uxap="sap.uxap"
+    xmlns:f="sap.ui.layout.form"
+    xmlns="sap.m">
+    <uxap:ObjectPageLayout
+        showFooter="true">
+        <uxap:headerTitle>
+            <uxap:ObjectPageHeader
+                objectTitle="{OrderDetails>/Details/OrderId}"
+                objectSubtitle="{OrderDetails>/Details/Description}" />
+        </uxap:headerTitle>
+        <uxap:sections>
+            <uxap:ObjectPageSection
+                title="Order Information">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <f:SimpleForm
+                            editable="false"
+                            layout="ResponsiveGridLayout"
+                            labelSpanL="3"
+                            labelSpanM="3"
+                            emptySpanL="0"
+                            emptySpanM="0"
+                            columnsL="1"
+                            columnsM="1">
+                            <Label text="OrderId" />
+                            <Input value="{OrderDetails>/Details/OrderId}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="Description" />
+                            <Input value="{OrderDetails>/Details/Description}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="Workcenter" />
+                            <Input
+                                value="{OrderDetails>/Details/Workcenter}"
+                                showValueHelp="true"
+                                valueHelpOnly="true"
+                                valueHelpRequest=".onWorkcenterValueHelpRequest"
+                                enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="WorkcenterDescr" />
+                            <Input value="{OrderDetails>/Details/WorkcenterDescr}" enabled="false" />
+                            <Label text="Plant" />
+                            <Input
+                                value="{OrderDetails>/Details/Plant}"
+                                showValueHelp="true"
+                                valueHelpOnly="true"
+                                valueHelpRequest=".onPlantValueHelpRequest"
+                                enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="PlantDescr" />
+                            <Input value="{OrderDetails>/Details/PlantDescr}" enabled="false" />
+                            <Label text="Priority" />
+                            <Input
+                                value="{OrderDetails>/Details/Priority}"
+                                showValueHelp="true"
+                                valueHelpOnly="true"
+                                valueHelpRequest=".onPriorityValueHelpRequest"
+                                enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="PriorityDescr" />
+                            <Input value="{OrderDetails>/Details/PriorityDescr}" enabled="false" />
+                            <Label text="StartDate" />
+                            <DatePicker value="{path: 'OrderDetails>/Details/StartDate', type: '.customTypesUtil.UTCDate'}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="FinishDate" />
+                            <DatePicker value="{path: 'OrderDetails>/Details/FinishDate', type: '.customTypesUtil.UTCDate'}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="StartTime" />
+                            <TimePicker value="{path: 'OrderDetails>/Details/StartTime', type: '.customTypesUtil.EDMTime'}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="FinishTime" />
+                            <TimePicker value="{path: 'OrderDetails>/Details/FinishTime', type: '.customTypesUtil.EDMTime'}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="FunctLoc" />
+                            <Input
+                                value="{OrderDetails>/Details/FunctLoc}"
+                                showValueHelp="true"
+                                valueHelpOnly="true"
+                                valueHelpRequest=".onFunctLocValueHelpRequest"
+                                enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="FunctLocDescr" />
+                            <Input value="{OrderDetails>/Details/FunctLocDescr}" enabled="false" />
+                            <Label text="Equipment" />
+                            <Input
+                                value="{OrderDetails>/Details/Equipment}"
+                                showValueHelp="true"
+                                valueHelpOnly="true"
+                                valueHelpRequest=".onEquipmentValueHelpRequest"
+                                enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="EquipmentDescr" />
+                            <Input value="{OrderDetails>/Details/EquipmentDescr}" enabled="false" />
+                            <Label text="NotifNo" />
+                            <Input value="{OrderDetails>/Details/NotifNo}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="RespPerson" />
+                            <Input
+                                value="{OrderDetails>/Details/RespPerson}"
+                                showValueHelp="true"
+                                valueHelpOnly="true"
+                                valueHelpRequest=".onRespPersonValueHelpRequest"
+                                enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="RespPersonName" />
+                            <Input value="{OrderDetails>/Details/RespPersonName}" enabled="false" />
+                            <Label text="Released" />
+                            <CheckBox selected="{OrderDetails>/Details/Released}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                            <Label text="Completed" />
+                            <CheckBox selected="{OrderDetails>/Details/Completed}" enabled="{= !!${OrderDetails>/EditMode} }" />
+                        </f:SimpleForm>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+            <uxap:ObjectPageSection
+                title="Operations">
+                <uxap:subSections>
+                    <uxap:ObjectPageSubSection>
+                        <Table
+                            items="{OrderDetails>/Details/Operations}">
+                            <headerToolbar>
+                                <Toolbar>
+                                    <ToolbarSpacer />
+                                    <Button
+                                        icon="sap-icon://add"
+                                        type="Accept"
+                                        text="Add Operation"
+                                        press=".onAddOperationPress"
+                                        visible="{= !!${OrderDetails>/EditMode} }" />
+                                </Toolbar>
+                            </headerToolbar>
+                            <columns>
+                                <Column>
+                                    <Label text="Operation" />
+                                </Column>
+                                <Column>
+                                    <Label text="Description" />
+                                </Column>
+                                <Column width="3rem">
+                                    <Label text="Delete" visible="false" />
+                                </Column>
+                            </columns>
+                            <items>
+                                <ColumnListItem>
+                                    <Text text="{OrderDetails>Activity}" />
+                                    <Input
+                                        value="{OrderDetails>Description}"
+                                        enabled="{= !!${OrderDetails>/EditMode} }" />
+                                    <Button
+                                        icon="sap-icon://delete"
+                                        type="Reject"
+                                        press=".onDeleteOperationPress"
+                                        enabled="{= !!${OrderDetails>/EditMode} }" />
+                                </ColumnListItem>
+                            </items>
+                        </Table>
+                    </uxap:ObjectPageSubSection>
+                </uxap:subSections>
+            </uxap:ObjectPageSection>
+        </uxap:sections>
+        <uxap:footer>
+            <OverflowToolbar>
+                <ToolbarSpacer />
+                <Button
+                    text="Edit"
+                    visible="{= !${OrderDetails>/EditMode} }"
+                    press=".onEditPress" />
+                <Button
+                    type="Emphasized"
+                    text="Save"
+                    visible="{= !!${OrderDetails>/EditMode} }"
+                    press=".onSavePress" />
+                <Button
+                    text="Cancel"
+                    visible="{= !!${OrderDetails>/EditMode} }"
+                    press=".onCancelPress" />
+            </OverflowToolbar>
+        </uxap:footer>
+    </uxap:ObjectPageLayout>
+</mvc:View>

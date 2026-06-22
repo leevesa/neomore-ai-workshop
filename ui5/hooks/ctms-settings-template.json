@@ -1,0 +1,9 @@
+{
+    "clientId": "{clientId}",
+    "clientSecret": "{clientSecret}",
+    "owner": "{owner}",
+    "tmUrl": "https://transport-service-app-backend.ts.cfapps.{datacenter}.hana.ondemand.com'",
+    "tokenUrl": "https://{subaccountId}.authentication.{datacenter}.hana.ondemand.com/oauth/token",
+    "targetNode": "{targetNode}",
+    "mtarPath": "./mta_archives/archive.mtar"
+}

@@ -1,0 +1,31 @@
+# Runs the CAP service in a container and points it at the Workshop Hub.
+#
+# WORKSHOP_HUB_URL controls where CAP sends its calls. Defaults to a Hub on the
+# host machine; override it to target the hosted/cloud Hub during the workshop:
+#
+#   WORKSHOP_HUB_URL=https://workshop-hub.example.com docker compose up --build
+#
+services:
+  cap:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: workshop-cap
+    ports:
+      - "4004:4004"
+    environment:
+      # Where to send Workshop Hub calls. `host.docker.internal` reaches a Hub
+      # running on the host (e.g. the workshop-hub compose stack on :8080).
+      WORKSHOP_HUB_URL: ${WORKSHOP_HUB_URL:-http://host.docker.internal:8080}
+      # Session to join and optional shared password.
+      WORKSHOP_SESSION_ID: ${WORKSHOP_SESSION_ID:-demo}
+      WORKSHOP_PASSWORD: ${WORKSHOP_PASSWORD:-}
+    extra_hosts:
+      # Lets `host.docker.internal` resolve on Linux as well as macOS/Windows.
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4004/workshop-hub/$$metadata').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      start_period: 30s
+      retries: 3

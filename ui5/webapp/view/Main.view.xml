@@ -1,0 +1,99 @@
+<mvc:View
+	controllerName="fi.neomore.template.controller.Main"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m">
+	<Page
+		navButtonPress="onNavBack"
+		showNavButton="true"
+		title="{i18n>APP_TITLE}">
+		<content>
+			<VBox class="sapUiSmallMargin">
+				<Input value="{View>/Test}" />
+				<Button
+					text="{i18n>BUTTON_TEXT}"
+					press="onButtonPress" />
+				<Button
+					text="{i18n>BUTTON_UPDATE_DATA_TEXT}"
+					press="onUpdateDataPress" />
+
+				<Text text="{parts: [
+					{path: 'View>/Test'},
+					{path: 'View>/Test'}
+				], formatter: '.formatterUtil.formatInputValue'}" />
+				<DatePicker value="{path: 'View>/StartDate', type: '.customTypesUtil.UTCDate'}" />
+				<Text text="{parts: [
+					{path: 'View>/StartDate'},
+					{value: 'yyyy-MM-dd HH:mm:ss'}
+				], formatter: '.formatterUtil.formatDateTime'}" />
+			</VBox>
+
+			<Table 
+				id="idProductsTable"
+				inset="false"
+				items="{
+					path: 'View>/WorkOrders',
+					sorter: {
+						path: 'Name'
+					}
+				}">
+				<columns>
+					<Column
+						width="12em">
+						<Text text="Product" />
+					</Column>
+					<Column
+						minScreenWidth="Tablet"
+						demandPopin="true">
+						<Text text="Supplier" />
+					</Column>
+					<Column
+						minScreenWidth="Desktop"
+						demandPopin="true"
+						hAlign="End">
+						<Text text="Dimensions" />
+					</Column>
+					<Column
+						minScreenWidth="Desktop"
+						demandPopin="true"
+						hAlign="Center">
+						<Text text="Weight" />
+					</Column>
+					<Column
+						hAlign="End">
+						<Text text="Price" />
+					</Column>
+				</columns>
+				<items>
+					<ColumnListItem vAlign="Middle">
+						<cells>
+							<ObjectIdentifier
+								title="{View>Description}"
+								text="{View>OrderId}"/>
+							<Text
+								text="{SupplierName}" />
+							<Text
+								text="{Width} x {Depth} x {Height} {DimUnit}" />
+							<ObjectNumber
+								number="{WeightMeasure}"
+								unit="{WeightUnit}"
+								state="{
+									parts: [
+										{path: 'WeightMeasure'},
+										{path: 'WeightUnit'}
+									],
+									formatter: '.formatter.weightState'
+								}" />
+							<ObjectNumber
+								number="{
+									parts:[{path:'Price'},{path:'CurrencyCode'}],
+									type: 'sap.ui.model.type.Currency',
+									formatOptions: {showMeasure: false}
+								}"
+								unit="{CurrencyCode}" />
+						</cells>
+					</ColumnListItem>
+				</items>
+			</Table>
+		</content>
+	</Page>
+</mvc:View>

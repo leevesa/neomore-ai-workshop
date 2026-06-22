@@ -1,0 +1,70 @@
+<mvc:View
+	controllerName="fi.neomore.template.controller.App"
+	xmlns:mvc="sap.ui.core.mvc"
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	displayBlock="true"
+	height="100%">
+	<App id="rootApp">
+		<Page id="chatPage" title="{i18n>CHAT_TITLE}">
+			<headerContent>
+				<HBox alignItems="Center" visible="{view>/registered}">
+					<Avatar
+						src="{view>/avatarUrl}"
+						initials="{view>/initials}"
+						displaySize="XS"
+						class="sapUiTinyMarginEnd" />
+					<Text text="{view>/displayName}" class="sapUiTinyMarginEnd" />
+				</HBox>
+			</headerContent>
+			<content>
+				<List
+					id="messageList"
+					items="{ path: '/Feed', sorter: { path: 'timestamp' }, filters: [ { path: 'eventType', operator: 'EQ', value1: 'chat.message.sent' } ] }"
+					noDataText="{i18n>NO_MESSAGES}"
+					showSeparators="None">
+					<CustomListItem>
+						<HBox class="sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop">
+							<Avatar
+								src="{ path: 'participantId', formatter: '.formatAvatarUrl' }"
+								initials="{ path: 'displayName', formatter: '.formatInitials' }"
+								displaySize="S"
+								class="sapUiSmallMarginEnd" />
+							<VBox>
+								<Title text="{displayName}" level="H6" />
+								<Text text="{message}" />
+							</VBox>
+						</HBox>
+					</CustomListItem>
+				</List>
+			</content>
+			<footer>
+				<Toolbar>
+					<TextArea
+						id="messageInput"
+						value="{view>/newMessage}"
+						placeholder="{i18n>MESSAGE_PLACEHOLDER}"
+						growing="true"
+						growingMaxLines="3"
+						rows="1"
+						width="100%"
+						enabled="{view>/registered}">
+						<layoutData>
+							<OverflowToolbarLayoutData maxWidth="100%" shrinkable="true" priority="NeverOverflow" />
+						</layoutData>
+					</TextArea>
+					<Button
+						text="{i18n>SEND_BUTTON}"
+						type="Emphasized"
+						icon="sap-icon://paper-plane"
+						press=".onSend"
+						enabled="{view>/registered}">
+						<layoutData>
+							<OverflowToolbarLayoutData priority="NeverOverflow" />
+						</layoutData>
+					</Button>
+				</Toolbar>
+			</footer>
+		</Page>
+	</App>
+</mvc:View>

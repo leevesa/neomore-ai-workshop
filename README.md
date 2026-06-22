@@ -6,9 +6,7 @@ Let's do agentic coding using [GitHub Copilot](https://docs.github.com/copilot/a
 
 ## Background
 
-Contoso is a company that sells products for various outdoor activities. A marketing department of Contoso would like to launch a micro social media website to promote their products for existing and potential customers. As their first MVP, they want to quickly build the website. The IT department of Contoso needs a Java developer to deliver the application quickly before the launch date.
-
-But here's the situation...
+Story needed for Neomore specific customer needs work done ..
 
 ## Workshop Objectives
 

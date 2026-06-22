@@ -1,0 +1,50 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:u="sap.ui.unified">
+	<Dialog
+		id="registerDialog"
+		title="{i18n>REGISTER_TITLE}"
+		contentWidth="22rem"
+		escapeHandler=".onRegisterEscape">
+		<content>
+			<VBox alignItems="Center" class="sapUiMediumMargin">
+				<core:Icon
+					src="sap-icon://account"
+					visible="{= !${view>/pendingAvatar} }"
+					size="3rem" />
+				<Avatar
+					src="{view>/pendingAvatar}"
+					visible="{= !!${view>/pendingAvatar} }"
+					displaySize="L" />
+				<u:FileUploader
+					id="avatarUploader"
+					name="avatar"
+					buttonText="{i18n>REGISTER_EDIT_AVATAR}"
+					iconOnly="false"
+					icon="sap-icon://camera"
+					buttonOnly="true"
+					fileType="png,jpg,jpeg,webp"
+					mimeType="image/png,image/jpeg,image/webp"
+					sameFilenameAllowed="true"
+					change=".onAvatarSelected"
+					class="sapUiSmallMarginTop" />
+			</VBox>
+			<VBox class="sapUiMediumMarginBegin sapUiMediumMarginEnd sapUiMediumMarginBottom">
+				<Label text="{i18n>REGISTER_NAME_LABEL}" labelFor="registerName" required="true" />
+				<Input
+					id="registerName"
+					value="{view>/displayName}"
+					placeholder="{i18n>REGISTER_NAME_PLACEHOLDER}"
+					submit=".onJoin" />
+			</VBox>
+		</content>
+		<beginButton>
+			<Button
+				text="{i18n>REGISTER_BUTTON}"
+				type="Emphasized"
+				press=".onJoin"
+				enabled="{= !${view>/busy} }" />
+		</beginButton>
+	</Dialog>
+</core:FragmentDefinition>

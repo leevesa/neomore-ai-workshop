@@ -1,0 +1,10 @@
+node_modules
+gen
+*.sqlite
+*.db
+.git
+.gitignore
+Dockerfile
+compose.yaml
+.env
+npm-debug.log
