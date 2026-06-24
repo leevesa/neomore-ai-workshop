@@ -4,8 +4,14 @@ FROM node:22-slim
 
 # Default runtime configuration. Every value can be overridden at `docker run`
 # / compose time so the same image works against a local or cloud Hub.
+#
+# CDS_REQUIRES_AUTH_KIND=dummy disables authentication. In production CAP
+# otherwise defaults to the `jwt` strategy, which requires the (uninstalled)
+# `@sap/xssec` package. The services define no auth restrictions, so `dummy`
+# is appropriate for this workshop backend.
 ENV NODE_ENV=production \
     PORT=4004 \
+    CDS_REQUIRES_AUTH_KIND=dummy \
     WORKSHOP_HUB_URL=http://localhost:8080 \
     WORKSHOP_SESSION_ID=demo \
     WORKSHOP_PASSWORD="" \

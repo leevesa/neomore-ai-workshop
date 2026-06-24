@@ -1,0 +1,40 @@
+# Starts the UI5 Fiori app and the CAP backend it depends on.
+#
+# Run from the ui5/ folder:
+#
+#   docker compose up --build
+#
+# The UI5 app is served at http://localhost:8081
+#
+# Optionally override where CAP sends its Workshop Hub calls:
+#
+#   WORKSHOP_HUB_URL=https://workshop-hub.example.com docker compose up --build
+
+services:
+  cap:
+    build:
+      context: ../cap
+      dockerfile: Dockerfile
+    environment:
+      WORKSHOP_HUB_URL: ${WORKSHOP_HUB_URL:-http://host.docker.internal:8080}
+      WORKSHOP_SESSION_ID: ${WORKSHOP_SESSION_ID:-demo}
+      WORKSHOP_PASSWORD: ${WORKSHOP_PASSWORD:-}
+    extra_hosts:
+      # Lets `host.docker.internal` resolve on Linux as well as macOS/Windows.
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:4004/workshop-hub/$$metadata').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 3s
+      start_period: 30s
+      retries: 3
+
+  ui5:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8081:8080"
+    depends_on:
+      cap:
+        condition: service_healthy

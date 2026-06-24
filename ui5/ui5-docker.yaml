@@ -1,0 +1,29 @@
+# yaml-language-server: $schema=https://sap.github.io/ui5-tooling/schema/ui5.yaml.json
+
+# UI5 tooling config for Docker Compose.
+# Proxies /workshop-hub to the `cap` service in the Docker network.
+# Used by Dockerfile: fiori run --config ./ui5-docker.yaml
+
+specVersion: "3.1"
+metadata:
+  name: fi.neomore.template
+type: application
+server:
+  customMiddleware:
+    - name: fiori-tools-proxy
+      afterMiddleware: compression
+      configuration:
+        ignoreCertError: false
+        ui5:
+          path:
+            - /resources
+            - /test-resources
+          url: https://ui5.sap.com
+        backend:
+          - path: /workshop-hub
+            url: http://cap:4004
+    - name: fiori-tools-preview
+      afterMiddleware: fiori-tools-proxy
+      configuration:
+        component: fi.neomore.template
+        ui5Theme: sap_fiori_3
