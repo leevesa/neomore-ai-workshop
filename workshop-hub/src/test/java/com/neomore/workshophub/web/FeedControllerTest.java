@@ -1,6 +1,5 @@
 package com.neomore.workshophub.web;
 
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNull;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -43,11 +42,11 @@ class FeedControllerTest {
 
     @Test
     void returnsFeedItems() throws Exception {
-        FeedItem item = new FeedItem(1L, "demo", "p-1", "Team A", "task.completed",
+        FeedItem item = new FeedItem(1L, "p-1", "Team A", "task.completed",
                 "cap-backend", null, null, Instant.parse("2026-06-22T10:05:00Z"), null);
-        when(workshopService.readFeed(eq("demo"), isNull())).thenReturn(List.of(item));
+        when(workshopService.readFeed(isNull())).thenReturn(List.of(item));
 
-        mockMvc.perform(get("/sessions/demo/feed"))
+        mockMvc.perform(get("/feed"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].eventType").value("task.completed"))
                 .andExpect(jsonPath("$[0].displayName").value("Team A"));
@@ -55,12 +54,12 @@ class FeedControllerTest {
 
     @Test
     void streamReturnsEventStreamAndSubscribes() throws Exception {
-        when(feedBroadcaster.subscribe("demo")).thenReturn(new SseEmitter());
+        when(feedBroadcaster.subscribe()).thenReturn(new SseEmitter());
 
-        mockMvc.perform(get("/sessions/demo/feed/stream").accept(MediaType.TEXT_EVENT_STREAM))
+        mockMvc.perform(get("/feed/stream").accept(MediaType.TEXT_EVENT_STREAM))
                 .andExpect(request().asyncStarted())
                 .andExpect(content().contentTypeCompatibleWith(MediaType.TEXT_EVENT_STREAM));
 
-        verify(feedBroadcaster).subscribe("demo");
+        verify(feedBroadcaster).subscribe();
     }
 }

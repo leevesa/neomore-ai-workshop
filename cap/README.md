@@ -45,7 +45,6 @@ build runs against a local Hub or the hosted one:
 Variable | Purpose | Default
 ---------|---------|--------
 `WORKSHOP_HUB_URL` | Base URL of the Workshop Hub | `http://localhost:8080`
-`WORKSHOP_SESSION_ID` | Session to join | `demo`
 `WORKSHOP_PASSWORD` | Optional shared password (sent as `X-Workshop-Password`) | _(none)_
 `WORKSHOP_HTTP_TIMEOUT_MS` | Per-request timeout in ms | `8000`
 
@@ -92,7 +91,6 @@ docker compose up --build
 
 # Target the hosted/cloud Hub instead
 WORKSHOP_HUB_URL=https://workshop-hub.example.com \
-WORKSHOP_SESSION_ID=demo \
 docker compose up --build
 ```
 

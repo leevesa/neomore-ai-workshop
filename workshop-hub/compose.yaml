@@ -7,11 +7,11 @@ services:
     ports:
       - "8080:8080"
     environment:
-      # Optional shared password. When set, write endpoints and the dashboard
-      # require it. Leave empty/unset for an open local/dry-run hub.
-      WORKSHOP_PASSWORD: ${WORKSHOP_PASSWORD:-}
-      # Default session that is created and seeded with the task list on startup.
-      WORKSHOP_DEFAULT_SESSION: ${WORKSHOP_DEFAULT_SESSION:-demo}
+      # Shared workshop password. When set, write endpoints and the dashboard
+      # require it (the dashboard prompts via HTTP Basic auth). Defaults to
+      # "local"; export WORKSHOP_PASSWORD to override, or set it empty to run a
+      # fully open local/dry-run hub.
+      WORKSHOP_PASSWORD: ${WORKSHOP_PASSWORD:-local}
     networks:
       - workshop
     healthcheck:

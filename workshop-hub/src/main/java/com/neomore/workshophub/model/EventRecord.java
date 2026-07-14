@@ -9,7 +9,6 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Lob;
 import jakarta.persistence.Table;
 
@@ -17,15 +16,12 @@ import jakarta.persistence.Table;
  * A persisted workshop event. Events are the unit of the live activity feed.
  */
 @Entity
-@Table(name = "events", indexes = @Index(name = "idx_event_session", columnList = "sessionId"))
+@Table(name = "events")
 public class EventRecord {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    private String sessionId;
 
     private String participantId;
 
@@ -60,14 +56,6 @@ public class EventRecord {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
     }
 
     public String getParticipantId() {

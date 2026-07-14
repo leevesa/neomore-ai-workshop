@@ -1,5 +1,4 @@
 sap.ui.define([
-	'fi/neomore/template/test/unit/controller/Main.controller',
 	'fi/neomore/template/test/unit/util/formatter',
 	'fi/neomore/template/test/unit/util/filter',
 	'fi/neomore/template/test/unit/util/customTypes',

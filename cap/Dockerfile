@@ -13,7 +13,6 @@ ENV NODE_ENV=production \
     PORT=4004 \
     CDS_REQUIRES_AUTH_KIND=dummy \
     WORKSHOP_HUB_URL=http://localhost:8080 \
-    WORKSHOP_SESSION_ID=demo \
     WORKSHOP_PASSWORD="" \
     WORKSHOP_HTTP_TIMEOUT_MS=8000
 

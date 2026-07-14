@@ -1,7 +1,6 @@
 package com.neomore.workshophub.web;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -34,11 +33,11 @@ class EventControllerTest {
 
     @Test
     void publishesValidEventAndReturns201() throws Exception {
-        FeedItem item = new FeedItem(1L, "demo", "p-1", "Team A", "task.completed",
+        FeedItem item = new FeedItem(1L, "p-1", "Team A", "task.completed",
                 "cap-backend", null, null, Instant.parse("2026-06-22T10:05:00Z"), null);
-        when(workshopService.publishEvent(eq("demo"), any())).thenReturn(item);
+        when(workshopService.publishEvent(any())).thenReturn(item);
 
-        mockMvc.perform(post("/sessions/demo/events")
+        mockMvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"participantId\":\"p-1\",\"eventType\":\"task.completed\",\"taskId\":\"cap-backend\"}"))
                 .andExpect(status().isCreated())
@@ -48,7 +47,7 @@ class EventControllerTest {
 
     @Test
     void rejectsMissingEventTypeWith400() throws Exception {
-        mockMvc.perform(post("/sessions/demo/events")
+        mockMvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"participantId\":\"p-1\"}"))
                 .andExpect(status().isBadRequest())
@@ -57,10 +56,10 @@ class EventControllerTest {
 
     @Test
     void rejectsUnknownEventTypeWith400() throws Exception {
-        when(workshopService.publishEvent(eq("demo"), any()))
+        when(workshopService.publishEvent(any()))
                 .thenThrow(new IllegalArgumentException("Unknown eventType: bogus.type"));
 
-        mockMvc.perform(post("/sessions/demo/events")
+        mockMvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"eventType\":\"bogus.type\"}"))
                 .andExpect(status().isBadRequest());
@@ -71,7 +70,7 @@ class EventControllerTest {
         when(properties.isPasswordProtected()).thenReturn(true);
         when(properties.getPassword()).thenReturn("secret");
 
-        mockMvc.perform(post("/sessions/demo/events")
+        mockMvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"eventType\":\"task.completed\"}"))
                 .andExpect(status().isUnauthorized());

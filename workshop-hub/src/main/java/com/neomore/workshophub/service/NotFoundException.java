@@ -1,7 +1,7 @@
 package com.neomore.workshophub.service;
 
 /**
- * Thrown when a referenced resource (session, participant) does not exist.
+ * Thrown when a referenced resource (participant, avatar) does not exist.
  * Mapped to HTTP 404 by the API exception handler.
  */
 public class NotFoundException extends RuntimeException {

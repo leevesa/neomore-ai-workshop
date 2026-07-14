@@ -11,12 +11,12 @@ describe('test suite description', () => {
 		const pageSelector = {
 			selector: {
 				controlType: 'sap.m.Page',
-				viewName: 'fi.neomore.template.view.Main',
+				viewName: 'fi.neomore.template.view.App',
 				// if left undefined: the DOM element that should receive events, as determined by OPA5. This would search for special elements with the following priority: press, focus, root.
 				interaction: 'root'
 			}
 		};
 		const title = await browser.asControl(pageSelector).getProperty('title');
-		expect(title).toEqual('Template');
+		expect(title).toEqual('Workshop Chat');
 	});
 });

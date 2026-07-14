@@ -10,7 +10,6 @@
  * development and to the hosted/cloud Hub during the workshop:
  *
  *   WORKSHOP_HUB_URL     Base URL of the Hub        (default http://localhost:8080)
- *   WORKSHOP_SESSION_ID  Session to join            (default demo)
  *   WORKSHOP_PASSWORD    Optional shared password   (default none)
  *   WORKSHOP_HTTP_TIMEOUT_MS  Per-request timeout   (default 8000)
  */
@@ -20,7 +19,6 @@ const PASSWORD_HEADER = 'X-Workshop-Password'
 function config() {
   return {
     url: (process.env.WORKSHOP_HUB_URL || 'http://localhost:8080').replace(/\/+$/, ''),
-    sessionId: process.env.WORKSHOP_SESSION_ID || 'demo',
     password: process.env.WORKSHOP_PASSWORD || '',
     timeoutMs: Number(process.env.WORKSHOP_HTTP_TIMEOUT_MS || 8000)
   }
@@ -38,11 +36,12 @@ class HubError extends Error {
   }
 }
 
-async function request(method, path, body) {
+async function request(method, path, body, password) {
   const cfg = config()
   const headers = { Accept: 'application/json' }
   if (body !== undefined) headers['Content-Type'] = 'application/json'
-  if (cfg.password) headers[PASSWORD_HEADER] = cfg.password
+  const pw = password || cfg.password
+  if (pw) headers[PASSWORD_HEADER] = pw
 
   const controller = new AbortController()
   const timer = setTimeout(() => controller.abort(), cfg.timeoutMs)
@@ -86,35 +85,30 @@ module.exports = {
   HubError,
   config,
 
-  health() {
-    return request('GET', '/health')
+  health(password) {
+    return request('GET', '/health', undefined, password)
   },
 
-  listTasks() {
-    const { sessionId } = config()
-    return request('GET', `/sessions/${encodeURIComponent(sessionId)}/tasks`)
+  listTasks(password) {
+    return request('GET', `/tasks`, undefined, password)
   },
 
-  readFeed(limit) {
-    const { sessionId } = config()
+  readFeed(limit, password) {
     const query = limit ? `?limit=${encodeURIComponent(limit)}` : ''
-    return request('GET', `/sessions/${encodeURIComponent(sessionId)}/feed${query}`)
+    return request('GET', `/feed${query}`, undefined, password)
   },
 
-  registerParticipant(displayName) {
-    const { sessionId } = config()
-    return request('POST', `/sessions/${encodeURIComponent(sessionId)}/participants`, { displayName })
+  registerParticipant(displayName, password) {
+    return request('POST', `/participants`, { displayName }, password)
   },
 
-  publishEvent(event) {
-    const { sessionId } = config()
-    return request('POST', `/sessions/${encodeURIComponent(sessionId)}/events`, event)
+  publishEvent(event, password) {
+    return request('POST', `/events`, event, password)
   },
 
   /** Anonymous presence ping — no participant identity, no body. */
-  sendHeartbeat() {
-    const { sessionId } = config()
-    return request('POST', `/sessions/${encodeURIComponent(sessionId)}/heartbeat`)
+  sendHeartbeat(password) {
+    return request('POST', `/heartbeat`, undefined, password)
   },
 
   /**
@@ -122,14 +116,15 @@ module.exports = {
    * validates the real image type from the bytes, so the content type sent here
    * is only a hint.
    */
-  async uploadAvatar(participantId, bytes, contentType) {
+  async uploadAvatar(participantId, bytes, contentType, password) {
     const cfg = config()
     const headers = { 'Content-Type': contentType || 'application/octet-stream' }
-    if (cfg.password) headers[PASSWORD_HEADER] = cfg.password
+    const pw = password || cfg.password
+    if (pw) headers[PASSWORD_HEADER] = pw
 
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), cfg.timeoutMs)
-    const path = `/sessions/${encodeURIComponent(cfg.sessionId)}/participants/${encodeURIComponent(participantId)}/avatar`
+    const path = `/participants/${encodeURIComponent(participantId)}/avatar`
 
     let response
     try {
@@ -160,14 +155,15 @@ module.exports = {
    * Download a participant's avatar. Returns the raw bytes and content type, or
    * throws a {@link HubError} with status 404 when no avatar is set.
    */
-  async getAvatar(participantId) {
+  async getAvatar(participantId, password) {
     const cfg = config()
     const headers = {}
-    if (cfg.password) headers[PASSWORD_HEADER] = cfg.password
+    const pw = password || cfg.password
+    if (pw) headers[PASSWORD_HEADER] = pw
 
     const controller = new AbortController()
     const timer = setTimeout(() => controller.abort(), cfg.timeoutMs)
-    const path = `/sessions/${encodeURIComponent(cfg.sessionId)}/participants/${encodeURIComponent(participantId)}/avatar`
+    const path = `/participants/${encodeURIComponent(participantId)}/avatar`
 
     let response
     try {

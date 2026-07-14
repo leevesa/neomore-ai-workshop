@@ -61,24 +61,6 @@ body {
     font-size: 13px;
 }
 
-.session {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-}
-
-.session-label {
-    color: var(--muted);
-    font-size: 12px;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-}
-
-.session-name {
-    font-size: 22px;
-    font-weight: 600;
-}
-
 .status {
     display: flex;
     align-items: center;

@@ -28,30 +28,29 @@ public class AvatarService {
     private final TaskVerificationService taskVerificationService;
 
     @Transactional
-    public void store(String sessionId, String participantId, byte[] data) {
-        Participant participant = participantRepository.findByIdAndSessionId(participantId, sessionId)
+    public void store(String participantId, byte[] data) {
+        Participant participant = participantRepository.findById(participantId)
                 .orElseThrow(() -> new NotFoundException(
-                        "Unknown participant " + participantId + " in session " + sessionId));
+                        "Unknown participant " + participantId));
 
         String contentType = avatarValidator.validate(data);
 
         Avatar avatar = avatarRepository.findById(participantId)
-                .orElseGet(() -> new Avatar(participantId, sessionId));
-        avatar.setSessionId(sessionId);
+                .orElseGet(() -> new Avatar(participantId));
         avatar.setContentType(contentType);
         avatar.setData(data);
         avatar.setSizeBytes(data.length);
         avatar.setUpdatedAt(Instant.now());
         avatarRepository.save(avatar);
 
-        taskVerificationService.markCompleted(sessionId, participantId, participant.getDisplayName(),
+        taskVerificationService.markCompleted(participantId, participant.getDisplayName(),
                 "feature-avatar", participant.getDisplayName() + " added a team avatar");
     }
 
     @Transactional(readOnly = true)
-    public Avatar get(String sessionId, String participantId) {
-        return avatarRepository.findByParticipantIdAndSessionId(participantId, sessionId)
+    public Avatar get(String participantId) {
+        return avatarRepository.findById(participantId)
                 .orElseThrow(() -> new NotFoundException(
-                        "No avatar for participant " + participantId + " in session " + sessionId));
+                        "No avatar for participant " + participantId));
     }
 }

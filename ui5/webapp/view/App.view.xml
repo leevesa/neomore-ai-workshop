@@ -15,6 +15,11 @@
 						displaySize="XS"
 						class="sapUiTinyMarginEnd" />
 					<Text text="{view>/displayName}" class="sapUiTinyMarginEnd" />
+					<Button
+						icon="sap-icon://edit"
+						type="Transparent"
+						tooltip="{i18n>EDIT_PROFILE_BUTTON}"
+						press=".onReopenRegistration" />
 				</HBox>
 			</headerContent>
 			<content>

@@ -4,8 +4,8 @@
  * The entities are not persisted in the CAP database (`@cds.persistence.skip`):
  * every read and action is delegated to the remote Workshop Hub REST API by the
  * handlers in `workshop-service.js`. The target Hub is configurable via the
- * WORKSHOP_HUB_URL / WORKSHOP_SESSION_ID / WORKSHOP_PASSWORD environment
- * variables, so the same build runs against a local Hub or the hosted cloud Hub.
+ * WORKSHOP_HUB_URL / WORKSHOP_PASSWORD environment variables, so the same build
+ * runs against a local Hub or the hosted cloud Hub.
  */
 service WorkshopHubService @(path: '/workshop-hub') {
 
@@ -19,12 +19,11 @@ service WorkshopHubService @(path: '/workshop-hub') {
             ordinal     : Integer;
     }
 
-    /** Live activity feed for the current session, newest first. */
+    /** Live activity feed, newest first. */
     @readonly
     @cds.persistence.skip
     entity Feed {
         key id            : Integer64;
-            sessionId     : String;
             participantId : String;
             displayName   : String;
             eventType     : String;
@@ -41,7 +40,6 @@ service WorkshopHubService @(path: '/workshop-hub') {
     entity Connection {
         key id                : String;
             hubUrl            : String;
-            sessionId         : String;
             connected         : Boolean;
             participantId     : String;
             displayName       : String;

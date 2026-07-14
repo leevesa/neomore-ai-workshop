@@ -18,7 +18,7 @@ import lombok.RequiredArgsConstructor;
  * for task progress: clients never self-report completion, they perform the real
  * action (register, chat, upload an avatar) and the hub verifies and records it.
  *
- * Completion is idempotent per (session, participant, task): a task is only ever
+ * Completion is idempotent per (participant, task): a task is only ever
  * marked complete once for a given participant.
  */
 @Service
@@ -34,19 +34,18 @@ public class TaskVerificationService {
      * missing or the task was already completed by this participant.
      */
     @Transactional
-    public void markCompleted(String sessionId, String participantId, String displayName, String taskId,
+    public void markCompleted(String participantId, String displayName, String taskId,
             String message) {
-        if (sessionId == null || participantId == null || participantId.isBlank() || taskId == null) {
+        if (participantId == null || participantId.isBlank() || taskId == null) {
             return;
         }
-        boolean alreadyDone = eventRepository.existsBySessionIdAndParticipantIdAndTaskIdAndEventType(
-                sessionId, participantId, taskId, EventType.TASK_COMPLETED);
+        boolean alreadyDone = eventRepository.existsByParticipantIdAndTaskIdAndEventType(
+                participantId, taskId, EventType.TASK_COMPLETED);
         if (alreadyDone) {
             return;
         }
 
         EventRecord event = new EventRecord();
-        event.setSessionId(sessionId);
         event.setParticipantId(participantId);
         event.setDisplayName(displayName);
         event.setEventType(EventType.TASK_COMPLETED);
@@ -56,6 +55,6 @@ public class TaskVerificationService {
         event.setTimestamp(Instant.now());
 
         EventRecord saved = eventRepository.save(event);
-        feedBroadcaster.broadcast(sessionId, FeedItem.from(saved));
+        feedBroadcaster.broadcast(FeedItem.from(saved));
     }
 }

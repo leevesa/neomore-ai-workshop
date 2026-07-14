@@ -15,13 +15,10 @@ public class WorkshopProperties {
     /** Shared workshop password. When blank, the hub is fully open. */
     private String password = "";
 
-    /** Default session created and seeded on startup. */
-    private String defaultSessionId = "demo";
-
     /** Interval between SSE keep-alive comments, in seconds. */
     private int sseKeepAliveSeconds = 15;
 
-    /** Canonical task list seeded for new sessions. */
+    /** Canonical task list seeded on startup. */
     private List<SeedTask> seedTasks = new ArrayList<>();
 
     /** Avatar upload constraints. */
@@ -33,14 +30,6 @@ public class WorkshopProperties {
 
     public void setPassword(String password) {
         this.password = password;
-    }
-
-    public String getDefaultSessionId() {
-        return defaultSessionId;
-    }
-
-    public void setDefaultSessionId(String defaultSessionId) {
-        this.defaultSessionId = defaultSessionId;
     }
 
     public int getSseKeepAliveSeconds() {

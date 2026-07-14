@@ -26,7 +26,7 @@ import lombok.RequiredArgsConstructor;
  * </ul>
  */
 @RestController
-@RequestMapping("/sessions/{sessionId}/participants/{participantId}/avatar")
+@RequestMapping("/participants/{participantId}/avatar")
 @RequiredArgsConstructor
 public class AvatarController {
 
@@ -34,18 +34,16 @@ public class AvatarController {
 
     @PostMapping
     public ResponseEntity<Void> upload(
-            @PathVariable String sessionId,
             @PathVariable String participantId,
             @RequestBody byte[] data) {
-        avatarService.store(sessionId, participantId, data);
+        avatarService.store(participantId, data);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
     @GetMapping
     public ResponseEntity<byte[]> fetch(
-            @PathVariable String sessionId,
             @PathVariable String participantId) {
-        Avatar avatar = avatarService.get(sessionId, participantId);
+        Avatar avatar = avatarService.get(participantId);
         return ResponseEntity.ok()
                 .contentType(MediaType.parseMediaType(avatar.getContentType()))
                 .cacheControl(CacheControl.noCache())

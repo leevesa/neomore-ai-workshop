@@ -8,7 +8,5 @@ import com.neomore.workshophub.model.Task;
 
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    List<Task> findBySessionIdOrderByOrdinalAsc(String sessionId);
-
-    boolean existsBySessionId(String sessionId);
+    List<Task> findAllByOrderByOrdinalAsc();
 }

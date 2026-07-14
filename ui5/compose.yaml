@@ -17,7 +17,6 @@ services:
       dockerfile: Dockerfile
     environment:
       WORKSHOP_HUB_URL: ${WORKSHOP_HUB_URL:-http://host.docker.internal:8080}
-      WORKSHOP_SESSION_ID: ${WORKSHOP_SESSION_ID:-demo}
       WORKSHOP_PASSWORD: ${WORKSHOP_PASSWORD:-}
     extra_hosts:
       # Lets `host.docker.internal` resolve on Linux as well as macOS/Windows.
@@ -35,6 +34,10 @@ services:
       dockerfile: Dockerfile
     ports:
       - "8081:8080"
+    volumes:
+      # Live-reload the Fiori sources without rebuilding the image.
+      # UI5 tooling serves from source, so a browser refresh is enough.
+      - ./webapp:/app/webapp
     depends_on:
       cap:
         condition: service_healthy

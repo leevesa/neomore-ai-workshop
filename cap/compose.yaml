@@ -17,8 +17,7 @@ services:
       # Where to send Workshop Hub calls. `host.docker.internal` reaches a Hub
       # running on the host (e.g. the workshop-hub compose stack on :8080).
       WORKSHOP_HUB_URL: ${WORKSHOP_HUB_URL:-http://host.docker.internal:8080}
-      # Session to join and optional shared password.
-      WORKSHOP_SESSION_ID: ${WORKSHOP_SESSION_ID:-demo}
+      # Optional shared password.
       WORKSHOP_PASSWORD: ${WORKSHOP_PASSWORD:-}
     extra_hosts:
       # Lets `host.docker.internal` resolve on Linux as well as macOS/Windows.

@@ -1,8 +1,0 @@
-<mvc:View
-	controllerName="fi.neomore.template.controller.NotFound"
-	xmlns="sap.m"
-	xmlns:mvc="sap.ui.core.mvc">
-	<IllustratedMessage
-		title="{i18n>NOT_FOUND_PAGE_TITLE}"
-		description="{i18n>NOT_FOUND_PAGE_DESCRIPTION}" />
-</mvc:View>

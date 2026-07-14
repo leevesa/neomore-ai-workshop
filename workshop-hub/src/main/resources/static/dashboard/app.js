@@ -2,7 +2,6 @@
     "use strict";
 
     var params = new URLSearchParams(window.location.search);
-    var sessionId = params.get("session") || "demo";
     var password = params.get("password");
 
     var STALE_MS = 60 * 1000; // mark participant stale after 60s without heartbeat
@@ -13,7 +12,6 @@
     var heartbeatCount = 0; // anonymous heartbeats observed this dashboard session
 
     var el = {
-        sessionName: document.getElementById("session-name"),
         statusDot: document.getElementById("status-dot"),
         statusText: document.getElementById("status-text"),
         heartbeatCount: document.getElementById("heartbeat-count"),
@@ -25,8 +23,6 @@
         celebrationText: document.getElementById("celebration-text")
     };
 
-    el.sessionName.textContent = sessionId;
-
     function withPassword(url) {
         if (!password) {
             return url;
@@ -35,7 +31,7 @@
     }
 
     function api(path) {
-        return withPassword("/sessions/" + encodeURIComponent(sessionId) + path);
+        return withPassword(path);
     }
 
     function avatarUrl(participantId) {

@@ -37,20 +37,18 @@ management:
 
 # Workshop Hub specific configuration.
 # All values can be overridden with environment variables (Spring relaxed binding):
-#   WORKSHOP_PASSWORD, WORKSHOP_DEFAULTSESSIONID, WORKSHOP_SSEKEEPALIVESECONDS
+#   WORKSHOP_PASSWORD, WORKSHOP_SSEKEEPALIVESECONDS
 workshop:
   # When set, write endpoints and the dashboard require the X-Workshop-Password header
   # (or ?password= for the dashboard). When blank, the hub is fully open (local/dry-run).
-  password: ${WORKSHOP_PASSWORD:}
-  # Default session created and seeded with the canonical task list on startup.
-  default-session-id: ${WORKSHOP_DEFAULT_SESSION:demo}
+  password: ${WORKSHOP_PASSWORD:local}
   # Interval for SSE keep-alive comments to prevent idle proxies from dropping the stream.
   sse-keep-alive-seconds: 15
   # Avatar upload constraints.
   avatar:
     # Maximum accepted avatar image size in bytes (default 512 KB).
     max-bytes: ${WORKSHOP_AVATAR_MAX_BYTES:524288}
-  # Canonical workshop task list seeded for new sessions. Each task is verified
+  # Canonical workshop task list seeded on startup. Each task is verified
   # server-side: the hub authors the task.completed event once it observes the
   # real action, so clients never self-report progress.
   seed-tasks:

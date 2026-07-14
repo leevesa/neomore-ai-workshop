@@ -68,7 +68,6 @@ The exact implementation can be decided later, but the workshop should assume a 
 Suggested configuration:
 
 - `WORKSHOP_HUB_URL`: Base URL for the hosted service.
-- `WORKSHOP_SESSION_ID`: Identifier for the live workshop session.
 - `WORKSHOP_PARTICIPANT_NAME`: Optional default participant or team name.
 - `WORKSHOP_PARTICIPANT_TOKEN`: Optional short-lived workshop token.
 - `WORKSHOP_DRY_RUN`: Allows the local app to simulate successful events when the hosted service is unavailable.
@@ -85,7 +84,7 @@ Suggested event types:
 
 ### Verifiable task backbone (implemented)
 
-The Hub seeds the `demo` session with three payload-verifiable tasks. The Hub itself
+The Hub seeds three payload-verifiable tasks on startup. The Hub itself
 authors the matching `task.completed` event once the action is validated:
 
 | Task ID | Title | Completed by the Hub when... |
@@ -101,13 +100,13 @@ Possible API shape:
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/sessions/{sessionId}/participants` | Register a participant or team |
-| `POST` | `/sessions/{sessionId}/events` | Publish progress, checkpoint, or chat events |
-| `POST` | `/sessions/{sessionId}/participants/{participantId}/avatar` | Upload a team avatar image (raw bytes) |
-| `GET` | `/sessions/{sessionId}/participants/{participantId}/avatar` | Fetch a team avatar image |
-| `POST` | `/sessions/{sessionId}/heartbeat` | Anonymous keep-alive ping |
-| `GET` | `/sessions/{sessionId}/feed` | Read recent activity for participant UI or facilitator tooling |
-| `GET` | `/sessions/{sessionId}/tasks` | Read the canonical task list for the codelab |
+| `POST` | `/participants` | Register a participant or team |
+| `POST` | `/events` | Publish progress, checkpoint, or chat events |
+| `POST` | `/participants/{participantId}/avatar` | Upload a team avatar image (raw bytes) |
+| `GET` | `/participants/{participantId}/avatar` | Fetch a team avatar image |
+| `POST` | `/heartbeat` | Anonymous keep-alive ping |
+| `GET` | `/feed` | Read recent activity for participant UI or facilitator tooling |
+| `GET` | `/tasks` | Read the canonical task list for the codelab |
 | `GET` | `/health` | Verify hosted service availability |
 
 Suggested event payload fields:

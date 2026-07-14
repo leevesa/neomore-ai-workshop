@@ -10,8 +10,8 @@ import com.neomore.workshophub.model.EventType;
 
 public interface EventRepository extends JpaRepository<EventRecord, Long> {
 
-    List<EventRecord> findBySessionIdOrderByTimestampDescIdDesc(String sessionId, Pageable pageable);
+    List<EventRecord> findAllByOrderByTimestampDescIdDesc(Pageable pageable);
 
-    boolean existsBySessionIdAndParticipantIdAndTaskIdAndEventType(
-            String sessionId, String participantId, String taskId, EventType eventType);
+    boolean existsByParticipantIdAndTaskIdAndEventType(
+            String participantId, String taskId, EventType eventType);
 }

@@ -11,11 +11,11 @@
 			<VBox alignItems="Center" class="sapUiMediumMargin">
 				<core:Icon
 					src="sap-icon://account"
-					visible="{= !${view>/pendingAvatar} }"
+					visible="{parts: [{path: 'view>/pendingAvatar'}, {path: 'view>/avatarUrl'}], formatter: '.formatShowAvatarPlaceholder'}"
 					size="3rem" />
 				<Avatar
-					src="{view>/pendingAvatar}"
-					visible="{= !!${view>/pendingAvatar} }"
+					src="{parts: [{path: 'view>/pendingAvatar'}, {path: 'view>/avatarUrl'}], formatter: '.formatAvatarPreviewSrc'}"
+					visible="{parts: [{path: 'view>/pendingAvatar'}, {path: 'view>/avatarUrl'}], formatter: '.formatHasAvatarPreview'}"
 					displaySize="L" />
 				<u:FileUploader
 					id="avatarUploader"
@@ -35,8 +35,22 @@
 				<Input
 					id="registerName"
 					value="{view>/displayName}"
+					editable="{= !${view>/nameLocked} }"
 					placeholder="{i18n>REGISTER_NAME_PLACEHOLDER}"
 					submit=".onJoin" />
+				<Label
+					text="{i18n>REGISTER_PASSWORD_LABEL}"
+					labelFor="registerPassword"
+					class="sapUiSmallMarginTop" />
+				<Input
+					id="registerPassword"
+					type="Password"
+					value="{view>/password}"
+					placeholder="{i18n>REGISTER_PASSWORD_PLACEHOLDER}"
+					submit=".onJoin" />
+				<Text
+					text="{i18n>REGISTER_PASSWORD_HINT}"
+					class="sapUiTinyMarginTop sapUiContentLabelColor" />
 			</VBox>
 		</content>
 		<beginButton>

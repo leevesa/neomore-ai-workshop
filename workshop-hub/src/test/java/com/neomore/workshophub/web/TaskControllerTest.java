@@ -31,11 +31,11 @@ class TaskControllerTest {
 
     @Test
     void returnsSeededTaskList() throws Exception {
-        when(workshopService.listTasks("demo")).thenReturn(List.of(
+        when(workshopService.listTasks()).thenReturn(List.of(
                 new TaskResponse("connect", "Connect to the Workshop Hub", "desc", 1),
                 new TaskResponse("cap-backend", "Explore the CAP backend", "desc", 2)));
 
-        mockMvc.perform(get("/sessions/demo/tasks"))
+        mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(2))
                 .andExpect(jsonPath("$[0].taskId").value("connect"))

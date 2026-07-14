@@ -10,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
 
@@ -21,6 +22,7 @@ import tools.jackson.databind.ObjectMapper;
  */
 @SpringBootTest
 @AutoConfigureMockMvc
+@TestPropertySource(properties = "workshop.password=")
 class WorkshopApiIntegrationTest {
 
     @Autowired
@@ -31,14 +33,14 @@ class WorkshopApiIntegrationTest {
 
     @Test
     void registerPublishFeedAndTasksFlow() throws Exception {
-        // The default session is seeded on startup with the canonical task list.
-        mockMvc.perform(get("/sessions/demo/tasks"))
+        // Tasks are seeded on startup with the canonical task list.
+        mockMvc.perform(get("/tasks"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3))
                 .andExpect(jsonPath("$[0].taskId").value("register"));
 
         // Register a participant. The hub auto-verifies the 'register' task.
-        MvcResult registerResult = mockMvc.perform(post("/sessions/demo/participants")
+        MvcResult registerResult = mockMvc.perform(post("/participants")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"displayName\":\"Team Integration\"}"))
                 .andExpect(status().isCreated())
@@ -49,7 +51,7 @@ class WorkshopApiIntegrationTest {
         String participantId = registered.get("participantId").asText();
 
         // Publish a (non-verifying) task.started event.
-        mockMvc.perform(post("/sessions/demo/events")
+        mockMvc.perform(post("/events")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"participantId\":\"" + participantId
                                 + "\",\"eventType\":\"task.started\",\"taskId\":\"chat\"}"))
@@ -57,7 +59,7 @@ class WorkshopApiIntegrationTest {
                 .andExpect(jsonPath("$.eventType").value("task.started"));
 
         // Feed (newest first): task.started, the server-authored register completion, then connected.
-        mockMvc.perform(get("/sessions/demo/feed"))
+        mockMvc.perform(get("/feed"))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[0].eventType").value("task.started"))
                 .andExpect(jsonPath("$[1].eventType").value("task.completed"))

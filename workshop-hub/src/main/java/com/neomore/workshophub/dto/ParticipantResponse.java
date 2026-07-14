@@ -9,7 +9,6 @@ import com.neomore.workshophub.model.Participant;
  */
 public record ParticipantResponse(
         String participantId,
-        String sessionId,
         String displayName,
         Instant connectedAt,
         Instant lastHeartbeatAt) {
@@ -17,7 +16,6 @@ public record ParticipantResponse(
     public static ParticipantResponse from(Participant participant) {
         return new ParticipantResponse(
                 participant.getId(),
-                participant.getSessionId(),
                 participant.getDisplayName(),
                 participant.getConnectedAt(),
                 participant.getLastHeartbeatAt());

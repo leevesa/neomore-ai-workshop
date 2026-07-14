@@ -28,9 +28,6 @@ public class Avatar {
     private String participantId;
 
     @Column(nullable = false)
-    private String sessionId;
-
-    @Column(nullable = false)
     private String contentType;
 
     @Lob
@@ -43,8 +40,7 @@ public class Avatar {
     @Column(nullable = false)
     private Instant updatedAt;
 
-    public Avatar(String participantId, String sessionId) {
+    public Avatar(String participantId) {
         this.participantId = participantId;
-        this.sessionId = sessionId;
     }
 }

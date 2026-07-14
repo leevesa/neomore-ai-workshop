@@ -1,7 +1,6 @@
 package com.neomore.workshophub.web;
 
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -40,10 +39,10 @@ class ParticipantControllerTest {
     @Test
     void registersParticipantAndReturns201() throws Exception {
         Instant now = Instant.parse("2026-06-22T10:00:00Z");
-        when(workshopService.registerParticipant(eq("demo"), any()))
-                .thenReturn(new ParticipantResponse("p-1", "demo", "Team A", now, now));
+        when(workshopService.registerParticipant(any()))
+                .thenReturn(new ParticipantResponse("p-1", "Team A", now, now));
 
-        mockMvc.perform(post("/sessions/demo/participants")
+        mockMvc.perform(post("/participants")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RegisterParticipantRequest("Team A"))))
                 .andExpect(status().isCreated())
@@ -53,7 +52,7 @@ class ParticipantControllerTest {
 
     @Test
     void rejectsBlankDisplayNameWith400() throws Exception {
-        mockMvc.perform(post("/sessions/demo/participants")
+        mockMvc.perform(post("/participants")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"displayName\":\"  \"}"))
                 .andExpect(status().isBadRequest())
@@ -65,7 +64,7 @@ class ParticipantControllerTest {
         when(properties.isPasswordProtected()).thenReturn(true);
         when(properties.getPassword()).thenReturn("secret");
 
-        mockMvc.perform(post("/sessions/demo/participants")
+        mockMvc.perform(post("/participants")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(new RegisterParticipantRequest("Team A"))))
                 .andExpect(status().isUnauthorized());

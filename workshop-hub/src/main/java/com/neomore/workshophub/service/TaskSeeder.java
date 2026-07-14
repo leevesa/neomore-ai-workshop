@@ -10,8 +10,8 @@ import com.neomore.workshophub.model.Task;
 import com.neomore.workshophub.repository.TaskRepository;
 
 /**
- * Seeds the canonical workshop task list (from configuration) for a session.
- * Idempotent: tasks are only created the first time a session is seeded.
+ * Seeds the canonical workshop task list (from configuration). Idempotent: tasks
+ * are only created the first time.
  */
 @Component
 public class TaskSeeder {
@@ -25,14 +25,14 @@ public class TaskSeeder {
     }
 
     @Transactional
-    public void seedTasksFor(String sessionId) {
-        if (taskRepository.existsBySessionId(sessionId)) {
+    public void seedTasks() {
+        if (taskRepository.count() > 0) {
             return;
         }
         List<WorkshopProperties.SeedTask> seeds = properties.getSeedTasks();
         for (int i = 0; i < seeds.size(); i++) {
             WorkshopProperties.SeedTask seed = seeds.get(i);
-            taskRepository.save(new Task(sessionId, seed.getId(), seed.getTitle(), seed.getDescription(), i + 1));
+            taskRepository.save(new Task(seed.getId(), seed.getTitle(), seed.getDescription(), i + 1));
         }
     }
 }

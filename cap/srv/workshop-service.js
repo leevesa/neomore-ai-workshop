@@ -15,7 +15,7 @@ class WorkshopHubService extends cds.ApplicationService {
   async init() {
     this.connection = { participantId: null, displayName: null, avatarSet: false }
 
-    this.on('READ', 'Tasks', () => this.readTasks())
+    this.on('READ', 'Tasks', (req) => this.readTasks(req))
     this.on('READ', 'Feed', (req) => this.readFeed(req))
     this.on('READ', 'Connection', () => [this.connectionRow()])
     this.on('READ', 'Avatars', (req) => this.readAvatar(req))
@@ -28,15 +28,15 @@ class WorkshopHubService extends cds.ApplicationService {
     this.on('reportFailure', (req) => this.sendEvent('verification.failed', req, { taskId: req.data.taskId, message: req.data.message, status: 'failed' }))
     this.on('sendChatMessage', (req) => this.sendEvent('chat.message.sent', req, { message: req.data.message }))
     this.on('heartbeat', (req) => this.doHeartbeat(req))
-    this.on('health', (req) => this.guard(req, () => hub.health()))
+    this.on('health', (req) => this.guard(req, () => hub.health(hubPassword(req))))
 
     await super.init()
   }
 
   // --- reads -------------------------------------------------------------
 
-  async readTasks() {
-    const tasks = await hub.listTasks()
+  async readTasks(req) {
+    const tasks = await hub.listTasks(hubPassword(req))
     return (tasks || []).map((t) => ({
       taskId: t.taskId,
       title: t.title,
@@ -49,7 +49,7 @@ class WorkshopHubService extends cds.ApplicationService {
     const select = req.query?.SELECT || {}
     // Fetch a generous window from the Hub, then apply OData filter/order/paging
     // locally (the Hub feed endpoint does not understand OData query options).
-    let items = (await hub.readFeed(FEED_FETCH_LIMIT)).map(toFeedRow)
+    let items = (await hub.readFeed(FEED_FETCH_LIMIT, hubPassword(req))).map(toFeedRow)
     items = applyWhere(items, select.where)
     items = applyOrderBy(items, select.orderBy)
     items = applyPaging(items, select.limit)
@@ -60,7 +60,7 @@ class WorkshopHubService extends cds.ApplicationService {
   async readAvatar(req) {
     const participantId = req.data.participantId
     if (!participantId) return req.reject(400, 'participantId is required')
-    const { bytes, contentType } = await this.guard(req, () => hub.getAvatar(participantId))
+    const { bytes, contentType } = await this.guard(req, () => hub.getAvatar(participantId, hubPassword(req)))
     return {
       participantId,
       contentType,
@@ -75,7 +75,7 @@ class WorkshopHubService extends cds.ApplicationService {
     const displayName = (req.data.displayName || '').trim()
     if (!displayName) return req.reject(400, 'displayName is required')
 
-    const participant = await this.guard(req, () => hub.registerParticipant(displayName))
+    const participant = await this.guard(req, () => hub.registerParticipant(displayName, hubPassword(req)))
     this.connection = {
       participantId: participant.participantId,
       displayName: participant.displayName,
@@ -93,14 +93,14 @@ class WorkshopHubService extends cds.ApplicationService {
     if (!image) return req.reject(400, 'image is required')
     const bytes = Buffer.isBuffer(image) ? image : Buffer.from(image, 'base64')
 
-    await this.guard(req, () => hub.uploadAvatar(this.connection.participantId, bytes))
+    await this.guard(req, () => hub.uploadAvatar(this.connection.participantId, bytes, undefined, hubPassword(req)))
     this.connection.avatarSet = true
     return this.connectionRow()
   }
 
   /** Send an anonymous heartbeat — no participant identity, no registration required. */
   async doHeartbeat(req) {
-    await this.guard(req, () => hub.sendHeartbeat())
+    await this.guard(req, () => hub.sendHeartbeat(hubPassword(req)))
   }
 
   /**
@@ -119,7 +119,7 @@ class WorkshopHubService extends cds.ApplicationService {
       message: fields.message || null,
       status: fields.status || null
     }
-    const item = await this.guard(req, () => hub.publishEvent(event))
+    const item = await this.guard(req, () => hub.publishEvent(event, hubPassword(req)))
     return toFeedRow(item)
   }
 
@@ -130,7 +130,6 @@ class WorkshopHubService extends cds.ApplicationService {
     return {
       id: 'current',
       hubUrl: cfg.url,
-      sessionId: cfg.sessionId,
       connected: Boolean(this.connection.participantId),
       participantId: this.connection.participantId,
       displayName: this.connection.displayName,
@@ -153,7 +152,6 @@ class WorkshopHubService extends cds.ApplicationService {
 function toFeedRow(item) {
   return {
     id: item.id,
-    sessionId: item.sessionId,
     participantId: item.participantId,
     displayName: item.displayName,
     eventType: item.eventType,
@@ -163,6 +161,16 @@ function toFeedRow(item) {
     timestamp: item.timestamp,
     metadata: item.metadata
   }
+}
+
+/**
+ * Password the UI5 client typed in and forwarded on the request. When present
+ * it takes precedence over the WORKSHOP_PASSWORD env fallback so participants
+ * can authenticate to a hosted, password-protected Hub without env config.
+ */
+function hubPassword(req) {
+  const headers = req && req.headers
+  return (headers && (headers['x-workshop-password'] || headers['X-Workshop-Password'])) || undefined
 }
 
 // How many feed items to pull from the Hub before filtering/paging locally.

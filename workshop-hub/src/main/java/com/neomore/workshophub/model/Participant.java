@@ -5,21 +5,17 @@ import java.time.Instant;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 /**
- * A participant or team registered to a session.
+ * A participant or team registered to the workshop.
  */
 @Entity
-@Table(name = "participants", indexes = @Index(name = "idx_participant_session", columnList = "sessionId"))
+@Table(name = "participants")
 public class Participant {
 
     @Id
     private String id;
-
-    @Column(nullable = false)
-    private String sessionId;
 
     @Column(nullable = false)
     private String displayName;
@@ -34,9 +30,8 @@ public class Participant {
         // for JPA
     }
 
-    public Participant(String id, String sessionId, String displayName, Instant connectedAt) {
+    public Participant(String id, String displayName, Instant connectedAt) {
         this.id = id;
-        this.sessionId = sessionId;
         this.displayName = displayName;
         this.connectedAt = connectedAt;
         this.lastHeartbeatAt = connectedAt;
@@ -48,14 +43,6 @@ public class Participant {
 
     public void setId(String id) {
         this.id = id;
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
     }
 
     public String getDisplayName() {

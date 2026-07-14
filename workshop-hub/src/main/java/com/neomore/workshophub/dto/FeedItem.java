@@ -10,7 +10,6 @@ import com.neomore.workshophub.model.EventRecord;
  */
 public record FeedItem(
         Long id,
-        String sessionId,
         String participantId,
         String displayName,
         String eventType,
@@ -23,7 +22,6 @@ public record FeedItem(
     public static FeedItem from(EventRecord event) {
         return new FeedItem(
                 event.getId(),
-                event.getSessionId(),
                 event.getParticipantId(),
                 event.getDisplayName(),
                 event.getEventType().wire(),

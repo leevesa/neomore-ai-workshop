@@ -5,23 +5,19 @@ import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-import jakarta.persistence.Index;
 import jakarta.persistence.Table;
 
 /**
- * A canonical workshop task scoped to a session. Seeded on startup from
- * configuration and returned by the tasks endpoint.
+ * A canonical workshop task. Seeded on startup from configuration and returned
+ * by the tasks endpoint.
  */
 @Entity
-@Table(name = "tasks", indexes = @Index(name = "idx_task_session", columnList = "sessionId"))
+@Table(name = "tasks")
 public class Task {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(nullable = false)
-    private String sessionId;
 
     @Column(nullable = false)
     private String taskId;
@@ -39,8 +35,7 @@ public class Task {
         // for JPA
     }
 
-    public Task(String sessionId, String taskId, String title, String description, int ordinal) {
-        this.sessionId = sessionId;
+    public Task(String taskId, String title, String description, int ordinal) {
         this.taskId = taskId;
         this.title = title;
         this.description = description;
@@ -53,14 +48,6 @@ public class Task {
 
     public void setId(Long id) {
         this.id = id;
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
     }
 
     public String getTaskId() {

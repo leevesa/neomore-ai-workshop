@@ -28,7 +28,7 @@ docker compose up --build
 Then open the projector dashboard:
 
 ```
-http://localhost:8080/dashboard/index.html?session=demo
+http://localhost:8080/dashboard/index.html
 ```
 
 Stop it with `Ctrl+C`, or in another terminal:
@@ -37,8 +37,8 @@ Stop it with `Ctrl+C`, or in another terminal:
 docker compose down
 ```
 
-On startup the hub creates a **default session** (`demo`) and seeds it with the canonical
-workshop task list, so the dashboard and `/tasks` endpoint work immediately.
+On startup the hub seeds the canonical workshop task list, so the dashboard and
+`/tasks` endpoint work immediately.
 
 ---
 
@@ -49,7 +49,6 @@ All settings are environment variables (override them in `compose.yaml` or your 
 | Variable | Default | Purpose |
 | --- | --- | --- |
 | `WORKSHOP_PASSWORD` | _(empty)_ | Optional shared password. When set, write endpoints and the dashboard require it. When empty, the hub is fully open (ideal for local/dry-run). |
-| `WORKSHOP_DEFAULT_SESSION` | `demo` | The session created and seeded on startup. |
 
 Example with a password:
 
@@ -70,16 +69,13 @@ Base URL: `http://localhost:8080`
 
 | Method | Path | Purpose |
 | --- | --- | --- |
-| `POST` | `/sessions/{sessionId}/participants` | Register a participant or team |
-| `POST` | `/sessions/{sessionId}/events` | Publish a progress / heartbeat / chat / checkpoint event |
-| `GET` | `/sessions/{sessionId}/feed` | Read recent activity (newest first, `?limit=` optional) |
-| `GET` | `/sessions/{sessionId}/feed/stream` | SSE stream of live events (used by the dashboard) |
-| `GET` | `/sessions/{sessionId}/tasks` | Read the canonical task list |
+| `POST` | `/participants` | Register a participant or team |
+| `POST` | `/events` | Publish a progress / heartbeat / chat / checkpoint event |
+| `GET` | `/feed` | Read recent activity (newest first, `?limit=` optional) |
+| `GET` | `/feed/stream` | SSE stream of live events (used by the dashboard) |
+| `GET` | `/tasks` | Read the canonical task list |
 | `GET` | `/health` | Service availability |
 | `GET` | `/actuator/health` | Health endpoint used by the container healthcheck |
-
-Sessions are created automatically the first time you register a participant or post an
-event with a new `sessionId`.
 
 ### Event types
 
@@ -97,20 +93,20 @@ event with a new `sessionId`.
 
 ```bash
 # 1. See the seeded tasks
-curl http://localhost:8080/sessions/demo/tasks
+curl http://localhost:8080/tasks
 
 # 2. Register a team — capture the returned participantId
-curl -X POST http://localhost:8080/sessions/demo/participants \
+curl -X POST http://localhost:8080/participants \
   -H 'content-type: application/json' \
   -d '{"displayName":"Team A"}'
 
 # 3. Publish a completed task (use the participantId from step 2)
-curl -X POST http://localhost:8080/sessions/demo/events \
+curl -X POST http://localhost:8080/events \
   -H 'content-type: application/json' \
   -d '{"participantId":"<id>","eventType":"task.completed","taskId":"connect"}'
 
 # 4. Read the feed (newest first)
-curl http://localhost:8080/sessions/demo/feed
+curl http://localhost:8080/feed
 ```
 
 With a password set, add `-H 'X-Workshop-Password: letmein'` to the two `POST` calls.
@@ -122,7 +118,7 @@ With a password set, add `-H 'X-Workshop-Password: letmein'` to the two `POST` c
 Open on the projector:
 
 ```
-http://localhost:8080/dashboard/index.html?session=demo
+http://localhost:8080/dashboard/index.html
 ```
 
 It shows, updating live as events arrive:
@@ -132,8 +128,7 @@ It shows, updating live as events arrive:
 - **Activity feed** — the running event log.
 - **Celebration overlay** — pops when a `checkpoint.passed` event arrives.
 
-Query params: `session` (which session to display), and `password` (only if the hub is
-password-protected).
+Query params: `password` (only if the hub is password-protected).
 
 ---
 
@@ -143,12 +138,12 @@ The participant's browser talks only to their **local CAP backend**; CAP is the 
 boundary that forwards validated events to this hub. During the codelab participants wire
 CAP to call:
 
-1. `POST /sessions/{sessionId}/participants` when a team name is entered.
-2. `POST /sessions/{sessionId}/events` when they start/complete tasks, send chat, or pass a
+1. `POST /participants` when a team name is entered.
+2. `POST /events` when they start/complete tasks, send chat, or pass a
    checkpoint — including a periodic `participant.heartbeat`.
 
 CAP reads the hub location from its own configuration (e.g. `WORKSHOP_HUB_URL`,
-`WORKSHOP_SESSION_ID`, `WORKSHOP_PARTICIPANT_TOKEN`/password, `WORKSHOP_DRY_RUN`). That CAP
+`WORKSHOP_PARTICIPANT_TOKEN`/password, `WORKSHOP_DRY_RUN`). That CAP
 side is intentionally **not** implemented here — it's what participants build.
 
 ---
