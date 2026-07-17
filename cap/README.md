@@ -1,41 +1,29 @@
-# Simple CAP "Backend" project
+# Workshop Hub CAP service
 
-It contains these folders and files, following our recommended project layout:
+A CAP (Node.js) service that fronts the [Workshop Hub](../workshop-hub/) REST API
+for the Fiori chat app in [`../ui5/`](../ui5/). Nothing is stored locally — every
+read and action is forwarded to the Hub, which will eventually run in the cloud.
 
 Folder | Purpose
 ---------|----------
-`db/` | your domain models and data go here
-`srv/` | your service models and code go here
+`srv/` | the `WorkshopHubService` model and handlers (`srv/lib/hub-client.js` talks to the Hub)
 
 
 ## Prerequisites
 
 - Install Node.js → always use the latest LTS version.
-- Install SQLite (only required on Windows) ```choco install sqlite```.
 - Install @sap/cds-dk globally with: `npm install -g @sap/cds-dk`
 
 ## Running the application
 
 - run ```npm install``` to install all dependencies
-- run ```npm run start```, this will start the application and it will run it in http://localhost:4004.
-
-
-## Additional Information
-
-Service metadata (OData v2) can be observed in http://localhost:4004/v2/sap/opu/odata/sap/ZCAP_BACKEND_SRV/$metadata.
-
-Few simple examples:
-- Get all Orders: http://localhost:4004/v2/sap/opu/odata/sap/ZCAP_BACKEND_SRV/WorkOrders
-- Get Order by ID: http://localhost:4004/v2/sap/opu/odata/sap/ZCAP_BACKEND_SRV/WorkOrders('1000000000')
-- Get Order by ID with expand: http://localhost:4004/v2/sap/opu/odata/sap/ZCAP_BACKEND_SRV/WorkOrders('1000000000')?$expand=Operations
-- Get Operations by Order ID: http://localhost:4004/v2/sap/opu/odata/sap/ZCAP_BACKEND_SRV/Operations?$filter=OrderId%20eq%20'1000000000'
+- run ```npm run start```, this will start the application on http://localhost:4004.
 
 ## Workshop Hub integration service
 
-In addition to the work-order backend, this project exposes a `WorkshopHubService`
-(OData V4 at `/workshop-hub`) that the Fiori app uses to talk to the
-[Workshop Hub](../workshop-hub/) REST API. Nothing is stored locally — every read
-and action is forwarded to the Hub, which will eventually run in the cloud.
+This project exposes a `WorkshopHubService` (OData V4 at `/workshop-hub`) that the
+Fiori app uses to talk to the [Workshop Hub](../workshop-hub/) REST API. Nothing is
+stored locally — every read and action is forwarded to the Hub.
 
 ### Configuration
 

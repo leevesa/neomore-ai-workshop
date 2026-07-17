@@ -18,9 +18,7 @@ ENV NODE_ENV=production \
 
 WORKDIR /app
 
-# Install dependencies first for better layer caching. @cap-js/sqlite (a
-# devDependency) is needed at runtime for the in-memory work-order data, so we
-# install all dependencies.
+# Install dependencies first for better layer caching.
 COPY package.json ./
 RUN npm install --no-audit --no-fund
 
@@ -28,7 +26,7 @@ COPY . .
 
 EXPOSE 4004
 
-# `cds-serve` (bundled with @sap/cds) bootstraps the in-memory SQLite database,
-# loads the CSV seed data for the work-order service, and serves every service
-# in srv/ (including the Workshop Hub integration service).
+# `cds-serve` (bundled with @sap/cds) serves every service in srv/, i.e. the
+# Workshop Hub integration service. Nothing is persisted locally — reads and
+# actions are forwarded to the Hub at WORKSHOP_HUB_URL.
 CMD ["npx", "cds-serve"]

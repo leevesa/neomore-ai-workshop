@@ -1,15 +1,11 @@
 {
-  "name": "simple-cap-backend",
+  "name": "workshop-hub-cap",
   "version": "1.0.0",
-  "description": "A simple CAP project.",
+  "description": "CAP service that fronts the Workshop Hub for the Fiori chat app.",
   "private": true,
   "dependencies": {
-    "@cap-js-community/odata-v2-adapter": "^1.15.4",
     "@sap/cds": "^9",
     "express": "^4"
-  },
-  "devDependencies": {
-    "@cap-js/sqlite": "^2"
   },
   "scripts": {
     "start": "cds watch"

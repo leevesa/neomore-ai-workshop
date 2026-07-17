@@ -1,4 +1,0 @@
-InvoiceId;ShipperName;ProductName;Quantity;ExtendedPrice;Status
-1;ShipperName 1;ProductName 1;5;5.000;1
-2;ShipperName 2;ProductName 2;5;5.000;2
-3;ShipperName 3;ProductName 3;5;5.000;3
