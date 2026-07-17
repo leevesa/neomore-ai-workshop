@@ -13,8 +13,8 @@ single page that talks to the CAP `WorkshopHubService` over **OData V4**
   (`participantId` + `displayName`) is kept in `sessionStorage`, so a reload skips the
   dialog for the rest of the session.
 - The **Chat** page lists `chat.message.sent` events (sender name + avatar) and lets you
-  post new messages via the `sendChatMessage` action. A background timer sends an
-  anonymous `heartbeat` while the page is open.
+  post new messages via the `sendChatMessage` action. A **heartbeat** button in the page
+  header sends an anonymous `heartbeat` on demand.
 
 Key files: [`webapp/view/App.view.xml`](webapp/view/App.view.xml),
 [`webapp/view/fragment/RegisterDialog.fragment.xml`](webapp/view/fragment/RegisterDialog.fragment.xml),

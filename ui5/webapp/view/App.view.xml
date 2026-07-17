@@ -16,6 +16,11 @@
 						class="sapUiTinyMarginEnd" />
 					<Text text="{view>/displayName}" class="sapUiTinyMarginEnd" />
 					<Button
+						icon="sap-icon://heart-2"
+						type="Transparent"
+						tooltip="{i18n>HEARTBEAT_BUTTON}"
+						press=".onHeartbeat" />
+					<Button
 						icon="sap-icon://edit"
 						type="Transparent"
 						tooltip="{i18n>EDIT_PROFILE_BUTTON}"

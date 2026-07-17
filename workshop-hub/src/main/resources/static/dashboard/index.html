@@ -9,19 +9,21 @@
 <body>
     <header class="topbar">
         <div class="brand">
-            <span class="logo">◆</span>
+            <img class="logo" src="neomore-logo.svg" alt="Neomore" />
             <div>
                 <h1>Workshop Hub</h1>
                 <p class="subtitle">Live participant feed</p>
             </div>
         </div>
-        <div class="heartbeats" title="Anonymous heartbeats received">
-            <span class="hb-icon">💓</span>
-            <span id="heartbeat-count" class="hb-count">0</span>
-        </div>
-        <div class="status">
-            <span id="status-dot" class="dot offline"></span>
-            <span id="status-text">Connecting…</span>
+        <div class="topbar-right">
+            <div class="status">
+                <span id="status-dot" class="dot offline"></span>
+                <span id="status-text">Connecting…</span>
+            </div>
+            <div class="heartbeats" title="Anonymous heartbeats received">
+                <span class="hb-icon">❤️</span>
+                <span id="heartbeat-count" class="hb-count">0</span>
+            </div>
         </div>
     </header>
 
@@ -54,6 +56,8 @@
             <p id="celebration-text">Milestone reached!</p>
         </div>
     </div>
+
+    <div id="reactions" class="reactions"></div>
 
     <script src="app.js"></script>
 </body>

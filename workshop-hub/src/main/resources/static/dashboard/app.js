@@ -6,21 +6,24 @@
 
     var STALE_MS = 60 * 1000; // mark participant stale after 60s without heartbeat
 
-    var participants = {}; // id -> { name, lastSeen }
+    var participants = {}; // id -> { name, lastSeen, completed:Set }
     var taskCompletions = {}; // taskId -> Set of participantId
-    var tasks = []; // { taskId, title }
+    var tasks = []; // { taskId, title, description, ordinal }
+    var expandedTasks = {}; // taskId -> true when instructions are expanded
     var heartbeatCount = 0; // anonymous heartbeats observed this dashboard session
 
     var el = {
         statusDot: document.getElementById("status-dot"),
         statusText: document.getElementById("status-text"),
+        heartbeats: document.querySelector(".heartbeats"),
         heartbeatCount: document.getElementById("heartbeat-count"),
         participantList: document.getElementById("participant-list"),
         participantCount: document.getElementById("participant-count"),
         taskList: document.getElementById("task-list"),
         feedList: document.getElementById("feed-list"),
         celebration: document.getElementById("celebration"),
-        celebrationText: document.getElementById("celebration-text")
+        celebrationText: document.getElementById("celebration-text"),
+        reactions: document.getElementById("reactions")
     };
 
     function withPassword(url) {
@@ -81,18 +84,36 @@
             return;
         }
         var now = Date.now();
+        var totalTasks = tasks.length;
+        // Leaderboard: most tasks completed first, ties broken alphabetically.
         ids.sort(function (a, b) {
+            var da = participants[a].completed ? participants[a].completed.size : 0;
+            var db = participants[b].completed ? participants[b].completed.size : 0;
+            if (db !== da) {
+                return db - da;
+            }
             return participants[a].name.localeCompare(participants[b].name);
         });
         el.participantList.innerHTML = ids.map(function (id) {
             var p = participants[id];
             var stale = now - p.lastSeen > STALE_MS;
-            return '<li>' +
+            var done = p.completed ? p.completed.size : 0;
+            var pct = totalTasks > 0 ? Math.round((done / totalTasks) * 100) : 0;
+            var complete = totalTasks > 0 && done >= totalTasks;
+            var crown = complete ? '<span class="pcrown" title="All tasks complete">👑</span>' : '';
+            return '<li class="' + (complete ? "complete" : "") + '">' +
+                '<div class="prow">' +
                 '<img class="pavatar" src="' + avatarUrl(id) + '" alt="" ' +
                 'onerror="this.classList.add(&quot;missing&quot;)" />' +
                 '<span class="pdot ' + (stale ? "stale" : "") + '"></span>' +
                 '<span class="pname">' + escapeHtml(p.name) + '</span>' +
+                crown +
                 '<span class="pmeta">' + (stale ? "idle" : "active") + '</span>' +
+                '</div>' +
+                '<div class="pprogress">' +
+                '<div class="pbar"><div class="pbar-fill" style="width:' + pct + '%"></div></div>' +
+                '<span class="pscore">' + done + "/" + totalTasks + '</span>' +
+                '</div>' +
                 '</li>';
         }).join("");
     }
@@ -103,15 +124,26 @@
             return;
         }
         var total = Math.max(Object.keys(participants).length, 1);
-        el.taskList.innerHTML = tasks.map(function (task) {
+        var ordered = tasks.slice().sort(function (a, b) {
+            return (a.ordinal || 0) - (b.ordinal || 0);
+        });
+        el.taskList.innerHTML = ordered.map(function (task, index) {
             var done = taskCompletions[task.taskId] ? taskCompletions[task.taskId].size : 0;
             var pct = Math.min(100, Math.round((done / total) * 100));
-            return '<li>' +
+            var seq = task.ordinal || index + 1;
+            var expanded = expandedTasks[task.taskId];
+            var instructions = task.description
+                ? '<div class="task-instructions">' + escapeHtml(task.description) + '</div>'
+                : '<div class="task-instructions">No instructions provided.</div>';
+            return '<li class="' + (expanded ? "expanded" : "") + '" data-task-id="' + escapeHtml(task.taskId) + '">' +
                 '<div class="task-head">' +
+                '<span class="task-seq">' + seq + '</span>' +
                 '<span class="task-title">' + escapeHtml(task.title) + '</span>' +
                 '<span class="task-count">' + done + " / " + total + '</span>' +
+                '<span class="task-caret">▶</span>' +
                 '</div>' +
                 '<div class="bar"><div class="bar-fill" style="width:' + pct + '%"></div></div>' +
+                instructions +
                 '</li>';
         }).join("");
     }
@@ -160,7 +192,7 @@
 
         if (id) {
             if (!participants[id]) {
-                participants[id] = { name: item.displayName || "Participant", lastSeen: ts };
+                participants[id] = { name: item.displayName || "Participant", lastSeen: ts, completed: new Set() };
             } else {
                 if (item.displayName) {
                     participants[id].name = item.displayName;
@@ -174,6 +206,10 @@
                 taskCompletions[item.taskId] = new Set();
             }
             taskCompletions[item.taskId].add(id);
+            if (!participants[id].completed) {
+                participants[id].completed = new Set();
+            }
+            participants[id].completed.add(item.taskId);
         }
 
         if (item.eventType === "checkpoint.passed") {
@@ -201,6 +237,51 @@
 
     function renderHeartbeats() {
         el.heartbeatCount.textContent = heartbeatCount;
+    }
+
+    var beatTimer = null;
+    function pulseHeartbeat() {
+        if (el.heartbeats) {
+            // Restart the pulse animation on the icon + count badge.
+            el.heartbeats.classList.remove("beat");
+            void el.heartbeats.offsetWidth; // force reflow so the animation replays
+            el.heartbeats.classList.add("beat");
+            if (beatTimer) {
+                clearTimeout(beatTimer);
+            }
+            beatTimer = setTimeout(function () {
+                el.heartbeats.classList.remove("beat");
+            }, 500);
+        }
+        spawnReaction();
+    }
+
+    function spawnReaction() {
+        if (!el.reactions) {
+            return;
+        }
+        // Instagram/TikTok-style live reaction: a heart rises from the bottom
+        // of the screen, drifting sideways as it fades out.
+        var heart = document.createElement("span");
+        heart.className = "reaction";
+        heart.textContent = "❤️";
+
+        var startRight = 24 + Math.random() * 140; // px from the right edge
+        var drift = (Math.random() * 120 - 60).toFixed(0) + "px"; // -60..60px sideways
+        var rise = (70 + Math.random() * 22).toFixed(0) + "vh"; // 70..92vh upward
+        var dur = (2.6 + Math.random() * 1.4).toFixed(2) + "s"; // 2.6..4.0s
+        var size = (22 + Math.random() * 14).toFixed(0) + "px"; // 22..36px
+
+        heart.style.right = startRight + "px";
+        heart.style.setProperty("--drift", drift);
+        heart.style.setProperty("--rise", rise);
+        heart.style.setProperty("--dur", dur);
+        heart.style.fontSize = size;
+
+        el.reactions.appendChild(heart);
+        heart.addEventListener("animationend", function () {
+            heart.remove();
+        });
     }
 
     function loadTasks() {
@@ -238,6 +319,7 @@
                 // Anonymous presence ping: bump the global counter, keep it out of the feed.
                 heartbeatCount++;
                 renderHeartbeats();
+                pulseHeartbeat();
                 return;
             }
             applyEvent(item);
@@ -251,6 +333,22 @@
             setStatus(false, "Reconnecting…");
         };
     }
+
+    // Toggle task instructions on click (delegated so it survives re-renders).
+    el.taskList.addEventListener("click", function (evt) {
+        var li = evt.target.closest ? evt.target.closest("li[data-task-id]") : null;
+        if (!li) {
+            return;
+        }
+        var taskId = li.getAttribute("data-task-id");
+        if (expandedTasks[taskId]) {
+            delete expandedTasks[taskId];
+            li.classList.remove("expanded");
+        } else {
+            expandedTasks[taskId] = true;
+            li.classList.add("expanded");
+        }
+    });
 
     // Re-render periodically so "active/idle" status stays current.
     setInterval(renderAll, 15000);

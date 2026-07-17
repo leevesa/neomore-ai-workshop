@@ -10,7 +10,6 @@ sap.ui.define([
 	const STORAGE_KEY = 'workshop.chat.participant';
 	const PASSWORD_KEY = 'workshop.chat.password';
 	const PASSWORD_HEADER = 'X-Workshop-Password';
-	const HEARTBEAT_MS = 20000;
 	const FEED_POLL_MS = 4000;
 
 	return Controller.extend('fi.neomore.template.controller.App', {
@@ -37,7 +36,6 @@ sap.ui.define([
 			// call) before any request fires.
 			this._applyPassword(this._readStoredPassword());
 
-			this._startHeartbeat();
 			this._startFeedPolling();
 
 			const stored = this._readStoredParticipant();
@@ -53,9 +51,6 @@ sap.ui.define([
 		},
 
 		onExit: function() {
-			if (this._heartbeatTimer) {
-				clearInterval(this._heartbeatTimer);
-			}
 			if (this._feedTimer) {
 				clearInterval(this._feedTimer);
 			}
@@ -228,13 +223,16 @@ sap.ui.define([
 				});
 		},
 
-		// --- background pings --------------------------------------------------
+		// --- presence ----------------------------------------------------------
 
-		_startHeartbeat: function() {
-			const fnPing = () => {
-				this._invokeAction('/heartbeat(...)', {}).catch(() => { /* ignore */ });
-			};
-			this._heartbeatTimer = setInterval(fnPing, HEARTBEAT_MS);
+		onHeartbeat: function() {
+			this._invokeAction('/heartbeat(...)', {})
+				.then(() => {
+					MessageToast.show(this._bundle.getText('HEARTBEAT_SENT'));
+				})
+				.catch((err) => {
+					MessageBox.error(this._bundle.getText('ERROR_HEARTBEAT_FAILED', [this._errorText(err)]));
+				});
 		},
 
 		_startFeedPolling: function() {
