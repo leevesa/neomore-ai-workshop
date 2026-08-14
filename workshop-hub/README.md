@@ -221,3 +221,116 @@ State lives in **in-memory H2** and resets every time the container restarts. Th
 deliberate for a short live workshop. To inspect data while running, the H2 console is
 available at `http://localhost:8080/h2-console` (JDBC URL
 `jdbc:h2:mem:workshophub`, user `sa`, empty password).
+
+---
+
+## 11. Azure operations
+
+The shared Hub is deployed to Azure Container Apps with these resources:
+
+```bash
+RESOURCE_GROUP="rg-neomore-workshop"
+ENVIRONMENT="cae-neomore-workshop"
+APP="neomore-workshop-hub"
+BASE_URL="https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io"
+```
+
+Sign in and select the correct Azure subscription before running the commands below:
+
+```bash
+az login
+az account list --output table
+az account set --subscription "<subscription-name-or-id>"
+```
+
+### Check status and logs
+
+```bash
+az containerapp show \
+  --name "$APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query '{revision:properties.latestRevisionName,running:properties.runningStatus,minReplicas:properties.template.scale.minReplicas,maxReplicas:properties.template.scale.maxReplicas}' \
+  --output table
+
+curl -fsS "$BASE_URL/actuator/health"
+curl -fsS "$BASE_URL/tasks"
+```
+
+Follow the application logs with:
+
+```bash
+az containerapp logs show \
+  --name "$APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --follow
+```
+
+### Restart the service
+
+Restart the latest revision when the process is unhealthy or a clean workshop state
+is required. **Restarting clears all participants, messages, avatars, and progress.**
+
+```bash
+REVISION="$(az containerapp show \
+  --name "$APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query properties.latestRevisionName \
+  --output tsv)"
+
+az containerapp revision restart \
+  --name "$APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --revision "$REVISION"
+
+curl -fsS "$BASE_URL/actuator/health"
+```
+
+### Build and deploy a new version
+
+Run these commands from the repository root. Azure builds the local Dockerfile, pushes
+the image to the existing registry, and creates a new Container Apps revision. Deploying
+a revision also starts with an empty in-memory database.
+
+```bash
+cd workshop-hub
+
+docker compose build
+
+az containerapp up \
+  --name "$APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --environment "$ENVIRONMENT" \
+  --source . \
+  --ingress external \
+  --target-port 8080
+```
+
+Keep exactly one always-running replica because every replica has its own in-memory
+database and SSE clients must observe the same process:
+
+```bash
+az containerapp update \
+  --name "$APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --min-replicas 1 \
+  --max-replicas 1 \
+  --cpu 0.5 \
+  --memory 1.0Gi
+```
+
+Verify the new revision before the workshop:
+
+```bash
+az containerapp show \
+  --name "$APP" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query properties.latestRevisionName \
+  --output tsv
+
+curl -fsS "$BASE_URL/actuator/health"
+curl -fsS "$BASE_URL/tasks"
+```
+
+The existing `WORKSHOP_PASSWORD` secret reference is retained when deploying a new
+revision. Do not place the password itself in this repository or in deployment commands
+that will be committed.
