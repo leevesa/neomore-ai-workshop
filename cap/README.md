@@ -52,6 +52,8 @@ Variable | Purpose | Default
 Actions (HTTP `POST` to `/workshop-hub/<action>`):
 
 - `register` — `{ "displayName": "Team Rocket" }` — register and remember the participant
+- `restoreConnection` — `{ "participantId": "<id>", "displayName": "Team Rocket" }` —
+  restore CAP's in-memory connection from the browser after a CAP restart
 - `uploadAvatar` — `{ "image": "<base64-encoded PNG/JPEG/WEBP bytes>" }` — store the current
   participant's avatar on the Hub (requires `register` first)
 - `startTask` — `{ "taskId": "register" }`
@@ -62,7 +64,8 @@ Actions (HTTP `POST` to `/workshop-hub/<action>`):
 
 > The participant-scoped event actions (`uploadAvatar`, `startTask`,
 > `passCheckpoint`, `reportFailure`, `sendChatMessage`) require `register` to be called
-> first (returns `412` otherwise). `heartbeat` also requires registration.
+> first, or `restoreConnection` after a CAP restart (returns `412` otherwise).
+> `heartbeat` also requires a current connection.
 
 > Task completion is authored by the Hub itself after it validates the payload —
 > clients never self-report. The six validations cover registration, attributed

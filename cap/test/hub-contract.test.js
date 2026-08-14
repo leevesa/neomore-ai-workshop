@@ -34,3 +34,16 @@ test('ordinary chat omits reply metadata', () => {
     message: 'hello'
   })
 })
+
+test('restores the in-memory connection from a persisted browser identity', () => {
+  const service = Object.create(WorkshopHubService.prototype)
+  service.connection = { participantId: null, displayName: null, avatarSet: false }
+
+  const result = service.doRestoreConnection({
+    data: { participantId: 'participant-1', displayName: 'Team One' }
+  })
+
+  assert.equal(result.connected, true)
+  assert.equal(result.participantId, 'participant-1')
+  assert.equal(result.displayName, 'Team One')
+})

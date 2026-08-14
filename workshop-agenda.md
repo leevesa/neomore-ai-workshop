@@ -147,7 +147,9 @@ npm test
 
 Inspect the code diff that the agent generated, accept if it looks correct and tests pass.
 
-Restart or rebuild the local stack if needed, then choose the heart button again.
+Restart or rebuild the local stack if needed, then refresh the existing browser tab.
+The browser restores its saved participant ID into the new CAP process, so you
+should not need to register a second team. Choose the heart button again.
 
 in ui5 folder:
 ```bash

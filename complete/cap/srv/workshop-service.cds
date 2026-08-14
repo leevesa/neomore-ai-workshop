@@ -66,6 +66,9 @@ service WorkshopHubService @(path: '/workshop-hub') {
     /** Register this participant/team with the Hub and remember the connection. */
     action register(displayName : String) returns Connection;
 
+    /** Restore a browser's existing participant after this CAP instance restarts. */
+    action restoreConnection(participantId : String, displayName : String) returns Connection;
+
     /** Upload the current participant's avatar image (base64-encoded bytes). */
     action uploadAvatar(image : LargeBinary) returns Connection;
 

@@ -229,6 +229,8 @@ not complete. Repair the integration so the Hub can identify the sender.
 1. Registration already stores the current participant in CAP memory.
 2. The Hub client supports both anonymous and attributed heartbeat calls.
 3. Compare the starter handler with `complete/cap` only if the task is still blocked.
+4. After rebuilding CAP, refresh the existing browser tab. Its session-stored
+  participant identity restores the new CAP process without another registration.
 
 ## Task 4: Send Your First Message - 5 Minutes
 

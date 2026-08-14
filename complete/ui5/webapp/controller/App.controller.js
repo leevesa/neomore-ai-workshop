@@ -37,11 +37,13 @@ sap.ui.define([
 			});
 			this.getView().setModel(this._viewModel, 'view');
 
-			// Restore and apply the workshop password (sent as a header on every hub
-			// call) before any request fires.
-			this._applyPassword(this._readStoredPassword());
+			// Restore and apply the workshop password (sent as a header on every Hub
+			// call) before periodic feed requests begin.
+			const pPasswordReady = this._applyPassword(this._readStoredPassword());
 
-			this._startFeedPolling();
+			pPasswordReady.then(() => {
+				this._startFeedPolling();
+			});
 
 			const stored = this._readStoredParticipant();
 			if (stored && stored.displayName) {
@@ -49,7 +51,7 @@ sap.ui.define([
 				this._viewModel.setProperty('/nameLocked', true);
 			}
 			if (stored && stored.participantId) {
-				this._applyRegistered(stored.participantId, stored.displayName);
+				this._restoreConnection(stored);
 			} else {
 				this._openRegisterDialog();
 			}
@@ -209,6 +211,19 @@ sap.ui.define([
 			this._viewModel.setProperty('/initials', this.formatInitials(sDisplayName));
 			this._viewModel.setProperty('/avatarUrl', this._avatarUrl(sParticipantId));
 			this._refreshMessages();
+		},
+
+		_restoreConnection: function(oStored) {
+			return this._invokeAction('/restoreConnection(...)', {
+				participantId: oStored.participantId,
+				displayName: oStored.displayName
+			}).then(() => {
+				this._applyRegistered(oStored.participantId, oStored.displayName);
+			}).catch((err) => {
+				this._viewModel.setProperty('/nameLocked', false);
+				this._openRegisterDialog();
+				MessageBox.error(this._bundle.getText('ERROR_REGISTER_FAILED', [this._errorText(err)]));
+			});
 		},
 
 		// --- sending -----------------------------------------------------------

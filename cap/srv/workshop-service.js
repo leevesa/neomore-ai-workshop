@@ -21,6 +21,7 @@ class WorkshopHubService extends cds.ApplicationService {
     this.on('READ', 'Avatars', (req) => this.readAvatar(req))
 
     this.on('register', (req) => this.doRegister(req))
+    this.on('restoreConnection', (req) => this.doRestoreConnection(req))
     this.on('uploadAvatar', (req) => this.doUploadAvatar(req))
     this.on('startTask', (req) => this.sendEvent('task.started', req, { taskId: req.data.taskId }))
     this.on('passCheckpoint', (req) => this.sendEvent('checkpoint.passed', req, { taskId: req.data.taskId, message: req.data.message }))
@@ -80,6 +81,16 @@ class WorkshopHubService extends cds.ApplicationService {
       displayName: participant.displayName,
       avatarSet: false
     }
+    return this.connectionRow()
+  }
+
+  doRestoreConnection(req) {
+    const participantId = (req.data.participantId || '').trim()
+    const displayName = (req.data.displayName || '').trim()
+    if (!participantId) return req.reject(400, 'participantId is required')
+    if (!displayName) return req.reject(400, 'displayName is required')
+
+    this.connection = { participantId, displayName, avatarSet: false }
     return this.connectionRow()
   }
 
