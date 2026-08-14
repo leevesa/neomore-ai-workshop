@@ -1,476 +1,407 @@
-# Neomore AI Coding Workshop Agenda
+# Workshop Participant Guide
 
-## Workshop Summary
+## Your Goal
 
-**Duration:** 60 minutes hands-on; 2.5 hours with setup, briefing, review, and recap
-**Format:** Guided codelab with hands-on GitHub Copilot Agent Mode exercises  
-**Audience:** Developers who want to use GitHub Copilot effectively across backend, frontend, integration, and containerization work  
-**Scenario:** Build a local CAP and UI5 workshop app that connects to a hosted live codelab service
+In this workshop, you will complete a local UI5 and CAP chat application that
+connects to the shared Workshop Hub. The Hub watches real application behavior and
+marks six tasks complete:
 
-This version of the workshop turns the codelab itself into the product. Every participant builds a local application that connects to a shared cloud-hosted service. The hosted service receives progress events, chat messages, task completions, and connection heartbeats from each participant. A facilitator dashboard shows the live feed on the projector so the room can see progress as it happens.
-
-The hands-on scope is intentionally focused:
-
-- **CAP** provides the local integration boundary, remembers the participant, and forwards UI actions to the hosted workshop service.
-- **UI5** provides the participant chat app for registration (with a team avatar), sending messages, and reading the shared chatboard.
-- **Containerization** keeps the local development environment repeatable.
-- **Workshop Hub** is implemented in this repository under [`workshop-hub/`](workshop-hub/) (Spring Boot + in-memory H2). It receives events, stores team avatars, authors task completions after validating payloads, and serves the facilitator dashboard. The same build runs locally or as the shared cloud instance.
-
-The goal is not only to build code faster. The goal is to teach participants how to use Copilot to reason across local code, remote service contracts, integration risks, verification loops, and real-time feedback.
-
-## Use Case Plan
-
-Neomore hosts a shared **Workshop Hub** in the cloud before the session starts. Participants each run a local CAP and UI5 application from the workshop repository. During the codelab, their local app connects to the hosted service and publishes lightweight events.
-
-The facilitator opens a projector dashboard backed by the hosted service. As participants connect, complete tasks, send messages, or hit checkpoints, the dashboard updates live.
-
-Core experience:
-
-1. A participant starts the local workshop app.
-2. The UI5 cockpit asks for a participant or team name.
-3. The CAP backend registers the participant with the hosted Workshop Hub.
-4. UI5 actions call CAP, which adds the registered participant identity and invokes the Hub contract.
-5. The Hub validates observed endpoint activity and authors task completion events.
-6. The hosted projector dashboard shows the update in the live feed.
-8. The facilitator uses the feed to spot blockers, pace the room, and celebrate milestones.
-
-The hosted service can start as a high-level concept for this agenda. Later, it can become a small cloud API with persistent session state, a projector UI, and optional WebSocket or Server-Sent Events support.
-
-## Conceptual Architecture
-
-```text
-Participant Browser
-    |
-    | UI actions: register, heartbeat, chat, avatar, reply
-    v
-Local UI5 App
-    |
-    | OData/actions or REST calls to local backend
-    v
-Local CAP Backend
-    |
-    | Validated HTTP events, configured by environment variables
-    v
-Hosted Workshop Hub
-    |
-    | Live feed and aggregate progress
-    v
-Facilitator Projector Dashboard
-```
-
-Design principle: the browser should call the local CAP backend, not the hosted service directly. CAP becomes the integration boundary, protects tokens, normalizes payloads, handles failures, and keeps the UI simple.
-
-## Conceptual Hosted Service Contract
-
-The Hub is implemented in this repository and exposes a deliberately small, stable contract.
-
-Suggested configuration:
-
-- `WORKSHOP_HUB_URL`: Base URL for the hosted service.
-- `WORKSHOP_PARTICIPANT_NAME`: Optional default participant or team name.
-- `WORKSHOP_PARTICIPANT_TOKEN`: Optional short-lived workshop token.
-- `WORKSHOP_DRY_RUN`: Allows the local app to simulate successful events when the hosted service is unavailable.
-
-Suggested event types:
-
-- `participant.connected`
-- `participant.heartbeat` (anonymous infrastructure pulse or participant-attributed task activity)
-- `task.started`
-- `task.completed` (authored by the Hub after it validates the payload — never self-reported)
-- `chat.message.sent`
-- `checkpoint.passed`
-- `verification.failed`
-
-### Verifiable task backbone (implemented)
-
-The Hub seeds six payload-verifiable tasks on startup. The Hub itself
-authors the matching `task.completed` event once the action is validated:
-
-| Task ID | Title | Completed by the Hub when... |
-| --- | --- | --- |
-| `register` | Register your team | a participant is created with a valid display name |
-| `heartbeat` | Send a heartbeat | `/heartbeat` receives a known participant ID |
-| `chat` | Post to the chatboard | a `chat.message.sent` arrives with a non-empty message |
-| `multiline-message` | Send a multiline message | chat contains at least two nonblank lines separated by real CR/LF characters |
-| `feature-avatar` | Add a team avatar | a valid image (PNG/JPEG/WEBP) is uploaded for the team |
-| `reply-message` | Reply to a message | reply metadata references an existing chat event |
-
-Team avatars are stored as raw image bytes in their own H2 table and served back as a
-binary `GET .../avatar` endpoint (exposed through CAP as the `Avatars` OData media entity).
-
-Possible API shape:
-
-| Method | Path | Purpose |
-| --- | --- | --- |
-| `POST` | `/participants` | Register a participant or team |
-| `POST` | `/events` | Publish progress, checkpoint, or chat events |
-| `POST` | `/participants/{participantId}/avatar` | Upload a team avatar image (raw bytes) |
-| `GET` | `/participants/{participantId}/avatar` | Fetch a team avatar image |
-| `POST` | `/heartbeat` | Anonymous pulse or participant-attributed heartbeat |
-| `GET` | `/feed` | Read recent activity for participant UI or facilitator tooling |
-| `GET` | `/tasks` | Read the canonical task list for the codelab |
-| `GET` | `/health` | Verify hosted service availability |
-
-Suggested event payload fields:
-
-- `participantId`
-- `displayName`
-- `eventType`
-- `taskId`
-- `message`
-- `status`
-- `timestamp`
-- `metadata`
-
-This contract should stay deliberately small. The point of the workshop is to practice AI-assisted integration, not to spend the whole session designing a platform.
-
-## Learning Outcomes
-
-By the end of the workshop, participants should be able to:
-
-- Use GitHub Copilot Chat and Agent Mode to make focused multi-file changes.
-- Create a discoverable workspace skill for repeatable UI5 development guidance.
-- Provide useful project context through README files, service contracts, custom instructions, and relevant source files.
-- Break implementation work into small prompts with clear acceptance criteria.
-- Generate and refine CAP, UI5, and Docker changes using existing repository patterns.
-- Design a local backend integration to a remote HTTP service.
-- Keep secrets and remote-service configuration out of browser code.
-- Validate generated code by running commands, reviewing diffs, checking endpoints, and improving tests.
-- Use MCP servers and custom instructions as practical steering tools rather than novelty features.
-- Recognize common risks in AI-generated integration code, including hallucinated APIs, weak error handling, missing retries, leaked secrets, and inconsistent architecture.
-
-## Narrative Spine
-
-The workshop itself becomes the product.
-
-Participants are not only building an example app. They are building a local codelab cockpit that reports its own progress to the shared room dashboard. This creates a visible feedback loop: the better their CAP and UI5 integration works, the more their work appears in the live feed.
-
-The participant app has two local responsibilities:
-
-1. **CAP workshop backend** owns the local participant connection and forwards typed actions to the Workshop Hub.
-2. **UI5 participant cockpit** provides registration, chat, heartbeat, avatar, and reply workflows.
-
-The hosted cloud service has three conceptual responsibilities:
-
-1. Accept participant registrations and events.
-2. Aggregate live progress across the workshop session.
-3. Power a projector dashboard for facilitators.
-
-## Recommended Repository Flow
-
-| Area | Folder Or Artifact | Role In Workshop |
-| --- | --- | --- |
-| Setup | `docs/00-setup.md` | Prepare VS Code, Copilot, custom instructions, and MCP servers |
-| Workshop agenda | `workshop-agenda.md` | Explain the live integration scenario and timing |
-| Hands-on guide | `docs/01-chat-workshop.md` | Seven timed exercises: one manual skill task and six Hub-verified tasks |
-| CAP | `cap/` | Workshop starter integration with intentional TODO defects |
-| UI5 | `ui5/` | Workshop starter chat UI with intentional TODO defects |
-| Containerization | `Dockerfile.workshop`, `compose.workshop.yaml` | Repeatable local workshop environment |
-| Complete samples | `complete/` | Reference material for comparison, debugging, and extension ideas |
-| Hosted service | `workshop-hub/` | API validation, shared live feed, task progress, and projector dashboard |
-
-## 60-Minute Hands-On Coding Core
-
-Environment setup and contract briefing happen before this clock starts. The detailed
-participant and facilitator instructions are in [`docs/01-chat-workshop.md`](docs/01-chat-workshop.md).
-
-| Time | Task | Verified outcome |
-| --- | --- | --- |
-| 0:00-0:05 | Register your team | Hub observes a valid participant registration |
-| 0:05-0:10 | Create a UI5 development skill | Local `SKILL.md` guides UI5 work and verifies icon names in SAP's Icon Explorer |
-| 0:10-0:18 | Send a heartbeat | CAP sends the known participant ID to `/heartbeat` |
-| 0:18-0:23 | Send your first message | Hub observes a nonblank chat event |
-| 0:23-0:33 | Preserve a multiline message | Real line breaks reach the Hub and render in UI5 |
-| 0:33-0:45 | Upload a team avatar | Valid normalized image bytes reach the Hub |
-| 0:45-1:00 | Reply to a message | UI5 and CAP preserve a valid target event ID |
-
-Facilitator recovery checkpoints occur at minutes 23, 33, and 45. Completion for
-the six API tasks is always Hub-authored from endpoint activity; participants never
-submit completion events. The UI5 skill file is inspected locally and is not sent
-to the Hub.
-
-## 150-Minute Agenda
-
-| Time | Segment | Focus | Output |
+| Order | Hub task | What you will do | Time |
 | --- | --- | --- | --- |
-| 0:00-0:10 | Welcome and live demo vision | Show the idea of a shared projector dashboard receiving participant events | Shared understanding of the room-scale feedback loop |
-| 0:10-0:25 | Copilot setup | Confirm VS Code, Copilot Chat, Agent Mode, model choice, custom instructions, and MCP servers | Working AI coding environment |
-| 0:25-0:40 | Hosted contract briefing | Introduce the conceptual Workshop Hub contract and define local acceptance criteria | Clear integration plan and event model |
-| 0:40-1:15 | Coding core, part 1 | Register, create the UI5 skill, repair heartbeat, send chat, and preserve multiline content | UI5 skill plus first four Hub-verified tasks |
-| 1:15-1:25 | Live checkpoint | Review integration code, error handling, and event payloads | Safer integration prompts and shared troubleshooting notes |
-| 1:25-2:00 | Coding core, part 2 | Repair avatar upload and complete the cross-layer reply flow | Six Hub-verified tasks |
-| 2:00-2:15 | End-to-end smoke test | Run local app, submit a progress event, and inspect CAP logs or hosted response | Verified local-to-hosted integration path |
-| 2:15-2:30 | Containerization and recap | Review local runtime, environment variables, diffs, and production hardening | Repeatable run plan and key Copilot takeaways |
+| 1 | `register` | Register your team | 5 min |
+| 2 | `heartbeat` | Send an identified heartbeat | 8 min |
+| 3 | `chat` | Send a one-line message | 5 min |
+| 4 | `multiline-message` | Preserve and display line breaks | 10 min |
+| 5 | `feature-avatar` | Upload your team avatar | 12 min |
+| 6 | `reply-message` | Reply to an existing message | 15 min |
 
-## Segment Details
+Allow the final 5 minutes for validation. When you finish, the source in `cap/`
+and `ui5/` should behave like the reference implementation in `complete/cap/` and
+`complete/ui5/`.
 
-### 1. Welcome And Live Demo Vision, 10 Minutes
+## How The App Works
 
-Introduce the workshop as a practical AI-assisted integration challenge. The room is part of the application: every participant connects to the same hosted service, and the facilitator dashboard shows progress live.
-
-Suggested framing:
-
-- We are building a local participant cockpit for an AI coding workshop.
-- CAP owns local state, validation, and integration with the hosted service.
-- UI5 provides the participant experience.
-- The hosted Workshop Hub collects events from everyone.
-- The projector dashboard turns individual progress into a shared live feed.
-
-Facilitator note: even if the hosted service is not implemented yet, show a simple mock screenshot, API sketch, or example payload so the concept feels concrete.
-
-### 2. Copilot Setup, 15 Minutes
-
-Use `docs/00-setup.md` as the setup guide. Keep this segment focused on enabling the workflow, not explaining every Copilot feature.
-
-Cover:
-
-- GitHub Copilot Chat in VS Code.
-- Agent Mode for multi-file implementation.
-- Inline chat for small local edits.
-- Model selection and when to use a stronger reasoning model.
-- Custom instructions for CAP, UI5, integration, testing, and containerization.
-- MCP servers for documentation lookup, repo context, browser verification, or platform-specific tools.
-
-Checkpoint prompt:
-
-```text
-
+```mermaid
+flowchart LR
+    Browser[Your browser] --> UI5[Local UI5 app]
+    UI5 --> CAP[Local CAP service]
+    CAP --> Hub[Shared Workshop Hub]
+    Hub --> Dashboard[Workshop dashboard]
 ```
 
-### 3. Hosted Contract Briefing, 15 Minutes
+Always work in the root `cap/` and `ui5/` folders. Do not modify
+`workshop-hub/`; it is the external system that verifies your work. Use
+`complete/` only as a recovery reference after you have investigated a task.
 
-Participants practice context engineering before implementation. The facilitator introduces the conceptual hosted service contract and asks Copilot to turn it into a scoped local implementation plan.
+The Hub marks tasks complete from valid requests. Do not send your own
+`task.completed` events.
 
-Recommended Copilot flow:
+## Before You Start
 
-1. Ask Copilot to summarize the hosted service contract.
-2. Ask it to identify local CAP entities, actions, configuration values, and failure cases.
-3. Ask it to identify UI5 views, models, states, and user actions.
-4. Ask for a small implementation plan with acceptance criteria.
-5. Ask it to call out ambiguous requirements before editing code.
+Get the Hub URL and workshop password from the facilitator, then export them in
+the terminal where you will start the app:
 
-Example prompt:
-
-```text
-
+```bash
+export WORKSHOP_HUB_URL="https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io"
+export WORKSHOP_PASSWORD="<shared-workshop-password>"
 ```
 
-### 4. CAP Integration Exercise, 35 Minutes
+Check that the Hub is available:
 
-Participants use Copilot Agent Mode to trace the existing CAP integration and repair
-participant heartbeat attribution. After a working one-line chat regression check,
-they begin the multiline flow. The UI5 skill should be checked locally and the first
-three Hub tasks should be complete at minute 23.
-
-Use the prompts and progressive hints in `docs/01-chat-workshop.md`. The exercise is
-about understanding the current contract and making focused changes, not generating a
-new service or local task model.
-
-Example prompt:
-
-```text
-
+```bash
+curl -fsS "$WORKSHOP_HUB_URL/actuator/health"
+curl -fsS "$WORKSHOP_HUB_URL/tasks"
 ```
 
-Expected artifact:
+Start your local UI5 and CAP containers:
 
-- CAP heartbeat request containing the current participant ID.
-- Working ordinary chat and a traced path for multiline message content.
-
-### 5. Live Checkpoint, 10 Minutes
-
-Pause before building the UI. This teaches that integration code needs review, especially when generated by AI.
-
-Review questions:
-
-- Did Copilot follow existing CAP service patterns?
-- Did it invent hosted endpoints or payload fields beyond the agreed contract?
-- Are environment variables handled safely?
-- What happens when the hosted service is unavailable?
-- Are errors useful for participants during a live workshop?
-
-Suggested Copilot review prompt:
-
-```text
-Review the CAP integration changes for correctness, consistency with the existing repository style, missing validation, unsafe configuration handling, and weak remote-service error handling. List only actionable findings.
+```bash
+cd ui5
+docker compose up --build
 ```
 
-### 6. UI5 Participant Cockpit, 35 Minutes
+Open `http://localhost:8081`. Keep the shared Workshop Hub dashboard open so you
+can see each task complete:
 
-Participants finish multiline transport and rendering, repair the existing avatar
-upload path, and complete reply propagation across UI5 and CAP. The Hub supplies the
-acceptance signal for each feature; UI5 never marks a task complete.
+https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io/dashboard/index.html
 
-Example prompt:
+## Working With Copilot
 
-```text
-Trace the selected reply event from the UI5 list item through the CAP action and into
-Workshop Hub event metadata. Preserve ordinary chat behavior and validate each layer.
-```
+For each task:
 
-Expected artifact:
+1. Reproduce the problem before changing code.
+2. Give Copilot the symptom, relevant files, and acceptance criteria.
+3. Ask for the smallest focused change.
+4. Review the diff instead of accepting it blindly.
+5. Run the suggested checks.
+6. Confirm completion on the Workshop Hub dashboard.
 
-- UI5 chat with preserved multiline display, persisted avatar, and verified replies.
+The prompts below are starting points. Add error messages or observed behavior
+when you have them.
 
-### 7. End-To-End Smoke Test, 15 Minutes
+## Task 1: Register Your Team
 
-Participants verify that the local app can complete the intended loop.
+This task confirms that your browser, UI5 app, CAP service, and shared Hub can
+communicate. No code change is required.
 
-Smoke test path:
+### Steps
 
-1. Start the local CAP service.
-2. Start the UI5 app.
-3. Register or identify the participant.
-4. Send an attributed heartbeat, multiline chat, avatar, and reply.
-5. Confirm the Hub dashboard shows six server-authored completions.
-6. Confirm ordinary chat and cancellation paths still work.
+1. Open `http://localhost:8081`.
+2. Enter a recognizable team name and the workshop password.
+3. Leave the avatar empty for now.
+4. Choose **Join Workshop**.
+5. Confirm that your team name appears in the application header.
+6. Find your team on the shared dashboard.
 
-Suggested verification prompt:
+### Expected Result
 
-```text
-Based on the current CAP and UI5 changes, tell me the shortest reliable smoke test for proving that a participant can send a progress event to the Workshop Hub. Include expected success and failure signals.
-```
+- The activity feed shows a `participant.connected` event.
+- The Hub marks `register` complete for your team.
+- The application stores the returned participant ID for later requests.
 
-### 8. Containerization And Recap, 15 Minutes
-
-Use the final segment to reinforce repeatability. The goal is not to fully productionize the hosted service, but to show how local container execution supports consistent development.
-
-Cover:
-
-- Review `compose.workshop.yaml` and `Dockerfile.workshop`.
-- Discuss where hosted service environment variables should be configured.
-- Explain how a dry-run mode helps when the cloud service is unavailable.
-- Inspect diffs before accepting changes.
-- Identify production hardening items that are outside workshop scope.
-
-Suggested recap prompt:
+### Example Prompt
 
 ```text
-Review the workshop changes across CAP, UI5, and containerization. Summarize what was built, how to run it, how progress events flow to the hosted service, what checks were performed, and what should be improved before production use.
+Trace registration from the UI5 join dialog through the local CAP service to the
+Workshop Hub. Explain where the returned participant ID is stored and how later
+actions use it. Do not change code.
 ```
 
-## GitHub Copilot Best Practices For June 2026
+If registration fails, check `WORKSHOP_HUB_URL`, `WORKSHOP_PASSWORD`, and the
+container logs before editing source code.
 
-### Context First
+## Task 2: Send An Identified Heartbeat
 
-Copilot performs better when it can see the system shape. Before asking for implementation, open the README, workshop agenda, service contract, related source files, test files, and configuration files. Ask Copilot to summarize what it sees and correct it if the summary is wrong.
+The heart button currently reaches the Hub, but the request is anonymous. Update
+CAP so the Hub can identify your team.
 
-### Prompt In Small Slices
+### Reproduce The Problem
 
-Use a sequence of prompts instead of one huge request:
+1. Choose the heart button in the application header.
+2. Watch the dashboard pulse.
+3. Confirm that the `heartbeat` task remains incomplete or the activity is
+   anonymous.
 
-1. Understand the current code.
-2. Understand the remote service contract.
-3. Create an implementation plan.
-4. Make a scoped CAP change.
-5. Make a scoped UI5 change.
-6. Add or update tests and smoke checks.
-7. Run verification.
-8. Review the diff.
+### Investigate
 
-### Use The Right Copilot Mode
+1. Open `cap/srv/workshop-service.js` and find the heartbeat action.
+2. Locate the in-memory connection state populated during registration.
+3. Open `cap/srv/lib/hub-client.js` and inspect `sendHeartbeat`.
+4. Confirm that the Hub client accepts an optional participant ID.
 
-- Use **Agent Mode** for multi-file changes, scaffolded features, tests, and integration work.
-- Use **inline chat** for small local changes in one file.
-- Use **chat Q&A** for understanding code, comparing options, and preparing prompts.
-- Use a stronger reasoning model when the task requires architecture, debugging, or cross-file planning.
+### Example Prompt
 
-### Make Custom Instructions Practical
+```text
+The CAP heartbeat reaches the Workshop Hub but remains anonymous. Inspect
+cap/srv/workshop-service.js and cap/srv/lib/hub-client.js. Pass the registered
+participant ID to the existing Hub client without changing anonymous Hub support.
+Keep the pre-registration error and run the CAP tests after the change.
+```
 
-Custom instructions should be short, specific, and tied to repository conventions. Good instructions describe stack choices, naming rules, testing expectations, formatting preferences, and architectural boundaries.
+### Validate
 
-Useful instruction categories for this workshop:
+```bash
+cd cap
+npm test
+```
 
-- CAP and CDS modeling conventions.
-- HTTP integration, configuration, and error-handling conventions.
-- UI5 controller, view, routing, model, and i18n conventions.
-- Docker and Compose conventions.
-- General review and testing expectations.
+Restart or rebuild the local stack if needed, then choose the heart button again.
 
-### Use MCP Servers Deliberately
+### Expected Result
 
-MCP servers are most useful when they bring trusted external or local context into the workflow. Good uses include documentation lookup, API exploration, browser verification, repository search, and platform-specific guidance. Avoid adding MCP servers just to have more tools available.
+- CAP sends `POST /heartbeat` with the registered participant ID.
+- The heartbeat activity names your team.
+- The Hub marks `heartbeat` complete exactly once.
+- A heartbeat before registration still returns a useful error.
 
-### Verify Generated Integration Code
+## Task 3: Send Your First Message
 
-Generated integration code still needs normal engineering discipline:
+Ordinary one-line chat already works. Use it as a regression check before changing
+message handling.
 
-- Run tests or smoke checks.
-- Inspect diffs before accepting changes.
-- Validate API paths, payloads, headers, and status codes.
-- Check generated UI behavior in the browser.
-- Confirm generated commands exist in the repo.
-- Confirm secrets and tokens are not committed.
-- Test hosted-service unavailable scenarios.
-- Ask Copilot to review its own changes for actionable risks.
+### Steps
 
-### Keep Humans In Control
+1. Enter a short one-line greeting.
+2. Send the message.
+3. Confirm that it appears in your chatboard and on another participant's screen.
+4. Check the shared dashboard.
 
-Copilot can accelerate implementation, but the developer owns correctness. Watch for hallucinated APIs, invented dependencies, weak error handling, missing authorization assumptions, leaked configuration, overly broad refactors, and tests that only confirm the implementation rather than the requirement.
+### Expected Result
 
-## Suggested Facilitator Checklist
+- The Hub receives a non-empty `chat.message.sent` event.
+- The Hub marks `chat` complete exactly once.
+- Your message remains visible after the feed refreshes.
 
-Before the workshop:
+### Example Prompt
 
-- Verify Docker Desktop, git, VS Code, and GitHub Copilot access.
-- Confirm the workshop container starts with `docker compose -f compose.workshop.yaml up --build -d`.
-- Confirm the setup guide still matches the current VS Code Copilot UI.
-- Prepare custom instruction files for CAP, UI5, integration, and containerization.
-- Prepare a stable hosted Workshop Hub URL or a mock endpoint.
-- Prepare a short service contract document or slide with endpoint and payload examples.
-- Prepare a projector dashboard concept, mock, or live hosted dashboard.
-- Prepare a fallback dry-run mode so participants can complete the exercise even if the hosted service is unavailable.
+```text
+Trace one chat message from ui5/webapp/controller/App.controller.js through the
+CAP sendChatMessage action and into the Workshop Hub event request. Explain the
+payload and validation path. Do not change code.
+```
 
-During the workshop:
+Do not continue until `register`, `heartbeat`, and `chat` are complete.
 
-- Keep each coding task small enough to complete in 10 to 15 minutes.
-- Ask participants to inspect plans before letting Agent Mode edit files.
-- Ask participants to read diffs before accepting generated changes.
-- Run at least one verification command or smoke check for CAP and UI5.
-- Watch the projector feed for stalled participants or repeated failure events.
-- Capture prompt improvements as shared learnings.
+## Task 4: Preserve A Multiline Message
 
-After the workshop:
+The starter replaces line breaks with spaces and renders the result as one line.
+Fix both transport and display behavior.
 
-- Share the final prompts that produced the best results.
-- Share known limitations and extension exercises.
-- Export or summarize the live progress feed if useful.
-- Encourage participants to adapt the custom instructions to their own repositories.
+### Reproduce The Problem
 
-## Future Hosted Service Backlog
+1. Enter two non-empty lines in the message composer.
+2. Send the message.
+3. Confirm that the lines are flattened and `multiline-message` remains
+   incomplete.
 
-The hosted Workshop Hub is outside the current repository scope, but it will become the centerpiece of the live experience. A future implementation could include:
+### Investigate
 
-- Session creation and facilitator controls.
-- Participant registration and display names.
-- Progress event ingestion.
-- Chat or activity feed ingestion.
-- Projector dashboard with live participant progress.
-- WebSocket or Server-Sent Events support for real-time updates.
-- Simple authentication using session codes or short-lived tokens.
-- Rate limiting and input validation.
-- Export of final workshop metrics.
+1. Open `ui5/webapp/util/chat.js` and inspect `normalizeMessage`.
+2. Open `ui5/webapp/test/unit/util/chat.js` and inspect its normalization tests.
+3. Open `ui5/webapp/view/App.view.xml` and find the message text control.
+4. Open `ui5/webapp/css/styles.less` and find the message style placeholder.
 
-## Extension Ideas
+### Example Prompt
 
-If the group moves quickly, add one of these extensions:
+```text
+Preserve multiline chat messages in the UI5 starter. Keep trimming whitespace at
+the beginning and end, but retain internal CR/LF characters. Update the focused
+QUnit test, render preserved whitespace in App.view.xml, and add the minimal LESS
+needed to preserve line breaks while wrapping long words. Run the UI5 tests and
+build. Do not change the CAP or Hub contracts.
+```
 
-- Add a chat message form in UI5 and forward messages through CAP.
-- Add UI filtering by task status, participant identity, or event type.
-- Add CAP tests for validation and hosted-service failure handling.
-- Add a mock Workshop Hub server for local development.
-- Add Compose environment variable examples for the hosted service.
-- Use Copilot to create a pull request summary and review checklist.
-- Add a short security review for tokens, input validation, and exposed endpoints.
+### Validate
 
-## Out Of Scope For The Core Session
+```bash
+cd ui5
+npm test
+npm run build
+```
 
-The following topics are valuable, but should remain optional for a 2.5-hour workshop:
+Send a new message with at least two non-empty lines.
 
-- Implementing the full hosted Workshop Hub during the session.
-- Full production authentication and authorization.
-- SAP BTP deployment.
-- Full CI/CD pipeline setup.
-- Complete end-to-end test automation.
-- Deep domain modeling beyond the workshop progress scenario.
-- Large-scale refactoring of the starter projects.
+### Expected Result
+
+- `normalizeMessage` trims only outer whitespace.
+- The payload contains a real line separator, not the characters `\` and `n`.
+- The chatboard displays the message on separate lines.
+- Long content still wraps inside the message area.
+- The Hub marks `multiline-message` complete.
+
+## Task 5: Upload Your Team Avatar
+
+The starter previews your selected image but does not upload it. Connect the
+existing normalized data URL to the CAP upload action.
+
+### Reproduce The Problem
+
+1. Reopen your team profile.
+2. Select a PNG, JPEG, or WEBP image.
+3. Save the profile.
+4. Confirm that the preview changes locally but `feature-avatar` remains
+   incomplete.
+
+### Investigate
+
+1. Open `ui5/webapp/controller/App.controller.js`.
+2. Find `_maybeUploadAvatar` and the pending avatar data URL.
+3. Find the existing `_invokeAction` helper and `/uploadAvatar(...)` action.
+4. Open `cap/srv/workshop-service.cds` to confirm that the action expects base64
+   image content.
+
+### Example Prompt
+
+```text
+The UI5 avatar preview works, but the image never reaches CAP. In
+ui5/webapp/controller/App.controller.js, complete _maybeUploadAvatar by removing
+only the data-URL prefix and passing the remaining base64 content as image to the
+existing /uploadAvatar(...) action. Mark the avatar uploaded only after success.
+Preserve the current normalization and error handling, then run the UI5 build.
+```
+
+### Validate
+
+```bash
+cd ui5
+npm run lint
+npm run build
+```
+
+Save the profile again, refresh the page, and reopen the profile editor.
+
+### Expected Result
+
+- UI5 sends only the base64 image content, without the data-URL prefix.
+- CAP converts and forwards the image bytes for your participant ID.
+- The avatar is loaded from the Hub after refresh.
+- The Hub marks `feature-avatar` complete.
+
+If the upload returns HTTP `413`, choose a smaller image and confirm that the
+existing client-side normalization is still being used.
+
+## Task 6: Reply To A Message
+
+The starter displays a reply preview, but it loses the selected event ID. Preserve
+that ID in UI5 and forward it through CAP as event metadata.
+
+### Reproduce The Problem
+
+1. Choose **Reply** on an existing chat message.
+2. Enter and send a response.
+3. Confirm that the reply is sent as an ordinary message and `reply-message`
+   remains incomplete.
+
+### Investigate
+
+1. In `ui5/webapp/controller/App.controller.js`, inspect `onReply`, `onSend`, and
+   the reply cleanup behavior.
+2. Confirm that `onSend` already supports an optional `replyToEventId`.
+3. In `cap/srv/workshop-service.js`, inspect `chatFields` and event construction.
+4. In `cap/test/hub-contract.test.js`, find the ordinary chat contract test.
+
+### Example Prompt
+
+```text
+Complete reply propagation with the smallest changes. In the UI5 controller,
+retain the selected feed item's id as replyToEventId. In CAP chatFields, include
+metadata.replyToEventId only when the optional value is present. Add a focused CAP
+test proving that a reply forwards only the target event ID. Preserve ordinary
+chat and existing reply cleanup, then run CAP tests and the UI5 build.
+```
+
+### Validate
+
+```bash
+cd cap
+npm test
+
+cd ../ui5
+npm run lint
+npm run build
+```
+
+Reply to an existing message again. Then cancel a second reply and send an ordinary
+message to check both paths.
+
+### Expected Result
+
+- UI5 retains the selected event ID until send succeeds or reply is canceled.
+- CAP sends `{ "replyToEventId": <id> }` as event metadata only for replies.
+- CAP does not forward client-authored copies of the original sender or message.
+- The Hub enriches the reply with trusted context from the referenced chat event.
+- Canceling reply leaves ordinary chat unchanged.
+- The Hub marks `reply-message` complete.
+
+## Final Validation
+
+Your team should now show `6/6` on the Workshop Hub dashboard.
+
+### Behavior Check
+
+1. Send another heartbeat and confirm there is no duplicate completion.
+2. Send a one-line message and confirm it still works.
+3. Send two real lines and confirm they remain separate.
+4. Confirm that typing a literal `\n` does not complete the multiline task.
+5. Refresh and confirm that your avatar still loads.
+6. Reply to a message, then cancel a reply and send an ordinary message.
+
+### Automated Checks
+
+```bash
+cd cap
+npm test
+
+cd ../ui5
+npm run lint
+npm test
+npm run build
+```
+
+### Compare With The Completed Reference
+
+The finished source should match the behavior and focused implementation in these
+reference files:
+
+| Your file | Completed reference |
+| --- | --- |
+| `cap/srv/workshop-service.js` | `complete/cap/srv/workshop-service.js` |
+| `cap/test/hub-contract.test.js` | `complete/cap/test/hub-contract.test.js` |
+| `ui5/webapp/controller/App.controller.js` | `complete/ui5/webapp/controller/App.controller.js` |
+| `ui5/webapp/util/chat.js` | `complete/ui5/webapp/util/chat.js` |
+| `ui5/webapp/test/unit/util/chat.js` | `complete/ui5/webapp/test/unit/util/chat.js` |
+| `ui5/webapp/view/App.view.xml` | `complete/ui5/webapp/view/App.view.xml` |
+| `ui5/webapp/css/styles.less` | `complete/ui5/webapp/css/styles.less` |
+| `ui5/webapp/css/styles.css` (generated by the build) | `complete/ui5/webapp/css/styles.css` |
+
+Use a focused diff if a task behaves differently:
+
+```bash
+diff -u cap/srv/workshop-service.js complete/cap/srv/workshop-service.js
+diff -u ui5/webapp/controller/App.controller.js complete/ui5/webapp/controller/App.controller.js
+```
+
+Do not replace whole starter folders with `complete/`. Review each remaining
+difference and make sure you understand why it is needed.
+
+## Recovery: Local Hub
+
+Use this only when the facilitator confirms that the shared Hub is unavailable.
+Start a local Hub in one terminal:
+
+```bash
+cd workshop-hub
+WORKSHOP_PASSWORD=local docker compose up --build
+```
+
+Start your starter app in another terminal:
+
+```bash
+cd ui5
+WORKSHOP_HUB_URL="http://host.docker.internal:8080" \
+WORKSHOP_PASSWORD="local" \
+docker compose up --build
+```
+
+Open the local dashboard at `http://localhost:8080/dashboard/index.html` and use
+the password `local`. Your progress will be isolated from the shared room.

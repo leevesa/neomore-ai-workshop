@@ -48,14 +48,14 @@ Before participants start, deploy `workshop-hub/` to a shared HTTPS endpoint and
 configure its `WORKSHOP_PASSWORD`. Record these two values for the room:
 
 ```text
-WORKSHOP_HUB_URL=https://<hosted-workshop-hub>
+WORKSHOP_HUB_URL=https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io
 WORKSHOP_PASSWORD=<shared-workshop-password>
 ```
 
 Open the hosted dashboard at:
 
 ```text
-https://<hosted-workshop-hub>/dashboard/index.html
+https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io/dashboard/index.html
 ```
 
 Confirm the hosted health endpoint responds, `/tasks` returns six tasks, and the
@@ -67,7 +67,7 @@ Get `WORKSHOP_HUB_URL` and `WORKSHOP_PASSWORD` from the facilitator. Export them
 the terminal that will start the participant stack:
 
 ```bash
-export WORKSHOP_HUB_URL="https://<hosted-workshop-hub>"
+export WORKSHOP_HUB_URL="https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io"
 export WORKSHOP_PASSWORD="<shared-workshop-password>"
 ```
 
@@ -88,7 +88,7 @@ docker compose up --build
 Open:
 
 - Local participant chat: `http://localhost:8081`
-- Hosted facilitator dashboard: `<WORKSHOP_HUB_URL>/dashboard/index.html`
+- Hosted facilitator dashboard: `https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io/dashboard/index.html`
 
 Enter the shared workshop password in the registration dialog. CAP also receives
 the same value through Docker Compose and forwards requests to the hosted Hub. The
