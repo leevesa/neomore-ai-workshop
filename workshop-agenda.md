@@ -2,7 +2,7 @@
 
 ## Workshop Summary
 
-**Duration:** 2.5 hours  
+**Duration:** 60 minutes hands-on; 2.5 hours with setup, briefing, review, and recap
 **Format:** Guided codelab with hands-on GitHub Copilot Agent Mode exercises  
 **Audience:** Developers who want to use GitHub Copilot effectively across backend, frontend, integration, and containerization work  
 **Scenario:** Build a local CAP and UI5 workshop app that connects to a hosted live codelab service
@@ -11,7 +11,7 @@ This version of the workshop turns the codelab itself into the product. Every pa
 
 The hands-on scope is intentionally focused:
 
-- **CAP** provides the local backend, owns task/progress state, validates participant actions, and integrates with the hosted workshop service.
+- **CAP** provides the local integration boundary, remembers the participant, and forwards UI actions to the hosted workshop service.
 - **UI5** provides the participant chat app for registration (with a team avatar), sending messages, and reading the shared chatboard.
 - **Containerization** keeps the local development environment repeatable.
 - **Workshop Hub** is implemented in this repository under [`workshop-hub/`](workshop-hub/) (Spring Boot + in-memory H2). It receives events, stores team avatars, authors task completions after validating payloads, and serves the facilitator dashboard. The same build runs locally or as the shared cloud instance.
@@ -29,10 +29,9 @@ Core experience:
 1. A participant starts the local workshop app.
 2. The UI5 cockpit asks for a participant or team name.
 3. The CAP backend registers the participant with the hosted Workshop Hub.
-4. The UI5 cockpit shows connection status, workshop tasks, local progress, and recent activity.
-5. When the participant completes a task, UI5 calls CAP.
-6. CAP validates the action and sends a progress event to the hosted service.
-7. The hosted projector dashboard shows the update in the live feed.
+4. UI5 actions call CAP, which adds the registered participant identity and invokes the Hub contract.
+5. The Hub validates observed endpoint activity and authors task completion events.
+6. The hosted projector dashboard shows the update in the live feed.
 8. The facilitator uses the feed to spot blockers, pace the room, and celebrate milestones.
 
 The hosted service can start as a high-level concept for this agenda. Later, it can become a small cloud API with persistent session state, a projector UI, and optional WebSocket or Server-Sent Events support.
@@ -42,7 +41,7 @@ The hosted service can start as a high-level concept for this agenda. Later, it 
 ```text
 Participant Browser
     |
-    | UI actions: register, start task, complete task, send chat
+    | UI actions: register, heartbeat, chat, avatar, reply
     v
 Local UI5 App
     |
@@ -63,7 +62,7 @@ Design principle: the browser should call the local CAP backend, not the hosted 
 
 ## Conceptual Hosted Service Contract
 
-The exact implementation can be decided later, but the workshop should assume a small, stable contract so participants have something concrete to integrate with.
+The Hub is implemented in this repository and exposes a deliberately small, stable contract.
 
 Suggested configuration:
 
@@ -75,7 +74,7 @@ Suggested configuration:
 Suggested event types:
 
 - `participant.connected`
-- `participant.heartbeat` (anonymous keep-alive; powers the dashboard's live pulse, not a per-team task)
+- `participant.heartbeat` (anonymous infrastructure pulse or participant-attributed task activity)
 - `task.started`
 - `task.completed` (authored by the Hub after it validates the payload — never self-reported)
 - `chat.message.sent`
@@ -84,14 +83,17 @@ Suggested event types:
 
 ### Verifiable task backbone (implemented)
 
-The Hub seeds three payload-verifiable tasks on startup. The Hub itself
+The Hub seeds six payload-verifiable tasks on startup. The Hub itself
 authors the matching `task.completed` event once the action is validated:
 
 | Task ID | Title | Completed by the Hub when... |
 | --- | --- | --- |
 | `register` | Register your team | a participant is created with a valid display name |
+| `heartbeat` | Send a heartbeat | `/heartbeat` receives a known participant ID |
 | `chat` | Post to the chatboard | a `chat.message.sent` arrives with a non-empty message |
+| `multiline-message` | Send a multiline message | chat contains at least two nonblank lines separated by real CR/LF characters |
 | `feature-avatar` | Add a team avatar | a valid image (PNG/JPEG/WEBP) is uploaded for the team |
+| `reply-message` | Reply to a message | reply metadata references an existing chat event |
 
 Team avatars are stored as raw image bytes in their own H2 table and served back as a
 binary `GET .../avatar` endpoint (exposed through CAP as the `Avatars` OData media entity).
@@ -104,7 +106,7 @@ Possible API shape:
 | `POST` | `/events` | Publish progress, checkpoint, or chat events |
 | `POST` | `/participants/{participantId}/avatar` | Upload a team avatar image (raw bytes) |
 | `GET` | `/participants/{participantId}/avatar` | Fetch a team avatar image |
-| `POST` | `/heartbeat` | Anonymous keep-alive ping |
+| `POST` | `/heartbeat` | Anonymous pulse or participant-attributed heartbeat |
 | `GET` | `/feed` | Read recent activity for participant UI or facilitator tooling |
 | `GET` | `/tasks` | Read the canonical task list for the codelab |
 | `GET` | `/health` | Verify hosted service availability |
@@ -127,6 +129,7 @@ This contract should stay deliberately small. The point of the workshop is to pr
 By the end of the workshop, participants should be able to:
 
 - Use GitHub Copilot Chat and Agent Mode to make focused multi-file changes.
+- Create a discoverable workspace skill for repeatable UI5 development guidance.
 - Provide useful project context through README files, service contracts, custom instructions, and relevant source files.
 - Break implementation work into small prompts with clear acceptance criteria.
 - Generate and refine CAP, UI5, and Docker changes using existing repository patterns.
@@ -144,8 +147,8 @@ Participants are not only building an example app. They are building a local cod
 
 The participant app has two local responsibilities:
 
-1. **CAP workshop backend** exposes local task state, validates progress updates, and forwards events to the hosted Workshop Hub.
-2. **UI5 participant cockpit** gives the participant a simple interface for connection status, tasks, progress updates, recent activity, and optional chat.
+1. **CAP workshop backend** owns the local participant connection and forwards typed actions to the Workshop Hub.
+2. **UI5 participant cockpit** provides registration, chat, heartbeat, avatar, and reply workflows.
 
 The hosted cloud service has three conceptual responsibilities:
 
@@ -159,11 +162,32 @@ The hosted cloud service has three conceptual responsibilities:
 | --- | --- | --- |
 | Setup | `docs/00-setup.md` | Prepare VS Code, Copilot, custom instructions, and MCP servers |
 | Workshop agenda | `workshop-agenda.md` | Explain the live integration scenario and timing |
-| CAP | `cap/` | Local backend, task state, validation, and hosted service integration |
-| UI5 | `ui5/` | Participant cockpit for tasks, progress, connection status, and chat |
+| Hands-on guide | `docs/01-chat-workshop.md` | Seven timed exercises: one manual skill task and six Hub-verified tasks |
+| CAP | `cap/` | Workshop starter integration with intentional TODO defects |
+| UI5 | `ui5/` | Workshop starter chat UI with intentional TODO defects |
 | Containerization | `Dockerfile.workshop`, `compose.workshop.yaml` | Repeatable local workshop environment |
 | Complete samples | `complete/` | Reference material for comparison, debugging, and extension ideas |
-| Hosted service | Planned cloud service | Shared live feed, task progress aggregation, and projector dashboard |
+| Hosted service | `workshop-hub/` | API validation, shared live feed, task progress, and projector dashboard |
+
+## 60-Minute Hands-On Coding Core
+
+Environment setup and contract briefing happen before this clock starts. The detailed
+participant and facilitator instructions are in [`docs/01-chat-workshop.md`](docs/01-chat-workshop.md).
+
+| Time | Task | Verified outcome |
+| --- | --- | --- |
+| 0:00-0:05 | Register your team | Hub observes a valid participant registration |
+| 0:05-0:10 | Create a UI5 development skill | Local `SKILL.md` guides UI5 work and verifies icon names in SAP's Icon Explorer |
+| 0:10-0:18 | Send a heartbeat | CAP sends the known participant ID to `/heartbeat` |
+| 0:18-0:23 | Send your first message | Hub observes a nonblank chat event |
+| 0:23-0:33 | Preserve a multiline message | Real line breaks reach the Hub and render in UI5 |
+| 0:33-0:45 | Upload a team avatar | Valid normalized image bytes reach the Hub |
+| 0:45-1:00 | Reply to a message | UI5 and CAP preserve a valid target event ID |
+
+Facilitator recovery checkpoints occur at minutes 23, 33, and 45. Completion for
+the six API tasks is always Hub-authored from endpoint activity; participants never
+submit completion events. The UI5 skill file is inspected locally and is not sent
+to the Hub.
 
 ## 150-Minute Agenda
 
@@ -172,9 +196,9 @@ The hosted cloud service has three conceptual responsibilities:
 | 0:00-0:10 | Welcome and live demo vision | Show the idea of a shared projector dashboard receiving participant events | Shared understanding of the room-scale feedback loop |
 | 0:10-0:25 | Copilot setup | Confirm VS Code, Copilot Chat, Agent Mode, model choice, custom instructions, and MCP servers | Working AI coding environment |
 | 0:25-0:40 | Hosted contract briefing | Introduce the conceptual Workshop Hub contract and define local acceptance criteria | Clear integration plan and event model |
-| 0:40-1:15 | CAP integration exercise | Add local task/progress model, participant registration, and event publishing to the hosted service | CAP backend that can prepare and send workshop events |
+| 0:40-1:15 | Coding core, part 1 | Register, create the UI5 skill, repair heartbeat, send chat, and preserve multiline content | UI5 skill plus first four Hub-verified tasks |
 | 1:15-1:25 | Live checkpoint | Review integration code, error handling, and event payloads | Safer integration prompts and shared troubleshooting notes |
-| 1:25-2:00 | UI5 participant cockpit | Build a UI for connection status, task progress, event submission, recent activity, and optional chat | UI5 app that drives participant progress events |
+| 1:25-2:00 | Coding core, part 2 | Repair avatar upload and complete the cross-layer reply flow | Six Hub-verified tasks |
 | 2:00-2:15 | End-to-end smoke test | Run local app, submit a progress event, and inspect CAP logs or hosted response | Verified local-to-hosted integration path |
 | 2:15-2:30 | Containerization and recap | Review local runtime, environment variables, diffs, and production hardening | Repeatable run plan and key Copilot takeaways |
 
@@ -233,19 +257,14 @@ Example prompt:
 
 ### 4. CAP Integration Exercise, 35 Minutes
 
-Participants use Copilot Agent Mode to work in the CAP backend. The exercise focuses on a local integration boundary rather than deep domain modeling.
+Participants use Copilot Agent Mode to trace the existing CAP integration and repair
+participant heartbeat attribution. After a working one-line chat regression check,
+they begin the multiline flow. The UI5 skill should be checked locally and the first
+three Hub tasks should be complete at minute 23.
 
-Possible tasks:
-
-- Inspect the existing CAP schema and service files.
-- Add a simple workshop task or progress entity if needed.
-- Add an action such as `registerParticipant`, `sendProgressEvent`, or `sendChatMessage`.
-- Read hosted service configuration from environment variables.
-- Implement HTTP calls from CAP to the hosted Workshop Hub.
-- Add validation for required participant, task, and message fields.
-- Handle hosted service failures with useful errors and logs.
-- Add a mock or dry-run mode when `WORKSHOP_HUB_URL` is not configured.
-- Run a CAP service smoke check.
+Use the prompts and progressive hints in `docs/01-chat-workshop.md`. The exercise is
+about understanding the current contract and making focused changes, not generating a
+new service or local task model.
 
 Example prompt:
 
@@ -255,7 +274,8 @@ Example prompt:
 
 Expected artifact:
 
-- CAP service that can represent local workshop progress and prepare or send events to the hosted Workshop Hub.
+- CAP heartbeat request containing the current participant ID.
+- Working ordinary chat and a traced path for multiline message content.
 
 ### 5. Live Checkpoint, 10 Minutes
 
@@ -277,27 +297,20 @@ Review the CAP integration changes for correctness, consistency with the existin
 
 ### 6. UI5 Participant Cockpit, 35 Minutes
 
-The UI5 starter becomes the participant-facing part of the codelab. Keep the UI practical and focused on the workshop flow.
-
-Recommended workflow:
-
-- Show connection status to the hosted Workshop Hub.
-- Show participant or team identity.
-- Show the codelab task list.
-- Let participants mark a task as started or completed.
-- Send progress events through CAP.
-- Show recent local activity or hosted feed entries if available.
-- If time allows, add a lightweight chat message form.
+Participants finish multiline transport and rendering, repair the existing avatar
+upload path, and complete reply propagation across UI5 and CAP. The Hub supplies the
+acceptance signal for each feature; UI5 never marks a task complete.
 
 Example prompt:
 
 ```text
-Act as a SAPUI5 developer. Build a simple participant cockpit using the existing UI5 app structure. Show connection status, participant identity, workshop tasks, progress actions, and recent activity. Call the CAP service actions instead of calling the hosted Workshop Hub directly from the browser.
+Trace the selected reply event from the UI5 list item through the CAP action and into
+Workshop Hub event metadata. Preserve ordinary chat behavior and validate each layer.
 ```
 
 Expected artifact:
 
-- UI5 participant cockpit that drives progress and optional chat events through CAP.
+- UI5 chat with preserved multiline display, persisted avatar, and verified replies.
 
 ### 7. End-To-End Smoke Test, 15 Minutes
 
@@ -308,9 +321,9 @@ Smoke test path:
 1. Start the local CAP service.
 2. Start the UI5 app.
 3. Register or identify the participant.
-4. Mark a task as started or completed.
-5. Confirm CAP logs, dry-run output, or hosted service response.
-6. Confirm the UI shows success, failure, or retry guidance clearly.
+4. Send an attributed heartbeat, multiline chat, avatar, and reply.
+5. Confirm the Hub dashboard shows six server-authored completions.
+6. Confirm ordinary chat and cancellation paths still work.
 
 Suggested verification prompt:
 

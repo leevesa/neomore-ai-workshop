@@ -34,15 +34,29 @@
 					noDataText="{i18n>NO_MESSAGES}"
 					showSeparators="None">
 					<CustomListItem>
-						<HBox class="sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop">
+						<HBox class="workshopMessageRow sapUiSmallMarginBegin sapUiSmallMarginEnd sapUiSmallMarginTop">
 							<Avatar
 								src="{ path: 'participantId', formatter: '.formatAvatarUrl' }"
 								initials="{ path: 'displayName', formatter: '.formatInitials' }"
 								displaySize="S"
 								class="sapUiSmallMarginEnd" />
-							<VBox>
-								<Title text="{displayName}" level="H6" />
-								<Text text="{message}" />
+							<VBox class="workshopMessageContent">
+								<HBox class="workshopMessageHeader" justifyContent="SpaceBetween" alignItems="Center">
+									<Title text="{displayName}" level="H6" />
+									<Button
+										icon="sap-icon://response"
+										type="Transparent"
+										tooltip="{i18n>REPLY_BUTTON}"
+										press=".onReply" />
+								</HBox>
+								<VBox
+									visible="{ path: 'metadata', formatter: '.formatHasReply' }"
+									class="workshopReplyReference sapUiTinyMarginBottom">
+									<Text text="{ path: 'metadata', formatter: '.formatReplyTitle' }" class="workshopReplyTitle" />
+									<Text text="{ path: 'metadata', formatter: '.formatReplyMessage' }" maxLines="2" />
+								</VBox>
+								<!-- TODO(workshop): Render preserved message line breaks. -->
+								<Text text="{message}" wrapping="true" class="workshopMessageText" />
 							</VBox>
 						</HBox>
 					</CustomListItem>
@@ -50,19 +64,35 @@
 			</content>
 			<footer>
 				<Toolbar>
-					<TextArea
-						id="messageInput"
-						value="{view>/newMessage}"
-						placeholder="{i18n>MESSAGE_PLACEHOLDER}"
-						growing="true"
-						growingMaxLines="3"
-						rows="1"
-						width="100%"
-						enabled="{view>/registered}">
+					<VBox width="100%" class="workshopComposerField">
+						<HBox
+							visible="{view>/replying}"
+							class="workshopReplyComposer"
+							justifyContent="SpaceBetween"
+							alignItems="Center">
+							<VBox class="workshopReplyComposerText">
+								<Text text="{view>/replyToLabel}" class="workshopReplyTitle" />
+								<Text text="{view>/replyToMessage}" maxLines="1" />
+							</VBox>
+							<Button
+								icon="sap-icon://decline"
+								type="Transparent"
+								tooltip="{i18n>CANCEL_REPLY_BUTTON}"
+								press=".onCancelReply" />
+						</HBox>
+						<TextArea
+							id="messageInput"
+							value="{view>/newMessage}"
+							placeholder="{i18n>MESSAGE_PLACEHOLDER}"
+							growing="true"
+							growingMaxLines="3"
+							rows="1"
+							width="100%"
+							enabled="{view>/registered}" />
 						<layoutData>
 							<OverflowToolbarLayoutData maxWidth="100%" shrinkable="true" priority="NeverOverflow" />
 						</layoutData>
-					</TextArea>
+					</VBox>
 					<Button
 						text="{i18n>SEND_BUTTON}"
 						type="Emphasized"

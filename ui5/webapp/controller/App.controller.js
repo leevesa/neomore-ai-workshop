@@ -3,8 +3,9 @@ sap.ui.define([
 	'sap/ui/model/json/JSONModel',
 	'sap/ui/core/Fragment',
 	'sap/m/MessageToast',
-	'sap/m/MessageBox'
-], function(Controller, JSONModel, Fragment, MessageToast, MessageBox) {
+	'sap/m/MessageBox',
+	'fi/neomore/template/util/chat'
+], function(Controller, JSONModel, Fragment, MessageToast, MessageBox, chat) {
 	'use strict';
 
 	const STORAGE_KEY = 'workshop.chat.participant';
@@ -28,7 +29,11 @@ sap.ui.define([
 				avatarUrl: null,
 				pendingAvatar: null,
 				password: '',
-				newMessage: ''
+				newMessage: '',
+				replying: false,
+				replyToEventId: null,
+				replyToLabel: '',
+				replyToMessage: ''
 			});
 			this.getView().setModel(this._viewModel, 'view');
 
@@ -189,11 +194,8 @@ sap.ui.define([
 			if (!sDataUrl) {
 				return Promise.resolve();
 			}
-			const sBase64 = sDataUrl.substring(sDataUrl.indexOf(',') + 1);
-			return this._invokeAction('/uploadAvatar(...)', { image: sBase64 })
-				.then(() => {
-					this._avatarUploaded = true;
-				});
+			// TODO(workshop): Send the selected image bytes through the CAP action.
+			return Promise.resolve();
 		},
 
 		_applyRegistered: function(sParticipantId, sDisplayName) {
@@ -209,18 +211,47 @@ sap.ui.define([
 		// --- sending -----------------------------------------------------------
 
 		onSend: function() {
-			const sMessage = (this._viewModel.getProperty('/newMessage') || '').trim();
-			if (!sMessage) {
+			const mParameters = chat.messageParameters(
+				this._viewModel.getProperty('/newMessage'),
+				this._viewModel.getProperty('/replyToEventId')
+			);
+			if (!mParameters.message) {
 				return;
 			}
-			this._invokeAction('/sendChatMessage(...)', { message: sMessage })
+			this._invokeAction('/sendChatMessage(...)', mParameters)
 				.then(() => {
 					this._viewModel.setProperty('/newMessage', '');
+					this._clearReply();
 					this._refreshMessages();
 				})
 				.catch((err) => {
 					MessageBox.error(this._bundle.getText('ERROR_SEND_FAILED', [this._errorText(err)]));
 				});
+		},
+
+		onReply: function(oEvent) {
+			const oContext = oEvent.getSource().getBindingContext();
+			const oMessage = oContext && oContext.getObject();
+			if (!oMessage || oMessage.id === null || typeof oMessage.id === 'undefined') {
+				return;
+			}
+			this._viewModel.setProperty('/replying', true);
+			// TODO(workshop): Keep the selected event ID so it can be sent through CAP.
+			this._viewModel.setProperty('/replyToLabel',
+				this._bundle.getText('REPLYING_TO', [oMessage.displayName || '']));
+			this._viewModel.setProperty('/replyToMessage', oMessage.message || '');
+			this.byId('messageInput').focus();
+		},
+
+		onCancelReply: function() {
+			this._clearReply();
+		},
+
+		_clearReply: function() {
+			this._viewModel.setProperty('/replying', false);
+			this._viewModel.setProperty('/replyToEventId', null);
+			this._viewModel.setProperty('/replyToLabel', '');
+			this._viewModel.setProperty('/replyToMessage', '');
 		},
 
 		// --- presence ----------------------------------------------------------
@@ -267,6 +298,19 @@ sap.ui.define([
 
 		formatHasAvatarPreview: function(sPendingAvatar, sAvatarUrl) {
 			return Boolean(sPendingAvatar || sAvatarUrl);
+		},
+
+		formatHasReply: function(vMetadata) {
+			return Boolean(chat.parseMetadata(vMetadata).replyToEventId);
+		},
+
+		formatReplyTitle: function(vMetadata) {
+			const oMetadata = chat.parseMetadata(vMetadata);
+			return this._bundle.getText('REPLYING_TO', [oMetadata.replyToDisplayName || '']);
+		},
+
+		formatReplyMessage: function(vMetadata) {
+			return chat.parseMetadata(vMetadata).replyToMessage || '';
 		},
 
 		formatShowAvatarPlaceholder: function(sPendingAvatar, sAvatarUrl) {
@@ -336,7 +380,7 @@ sap.ui.define([
 		_readStoredParticipant: function() {
 			try {
 				return JSON.parse(window.sessionStorage.getItem(STORAGE_KEY));
-			} catch (e) {
+			} catch {
 				return null;
 			}
 		},
@@ -380,7 +424,7 @@ sap.ui.define([
 					try {
 						oModel.changeHttpHeaders(mHeaders);
 						resolve();
-					} catch (e) {
+					} catch {
 						// Requests in flight — headers can only change when the model
 						// is idle, so retry shortly.
 						setTimeout(fnApply, 200);
@@ -393,7 +437,7 @@ sap.ui.define([
 		_readStoredPassword: function() {
 			try {
 				return window.sessionStorage.getItem(PASSWORD_KEY) || '';
-			} catch (e) {
+			} catch {
 				return '';
 			}
 		},
@@ -405,7 +449,7 @@ sap.ui.define([
 				} else {
 					window.sessionStorage.removeItem(PASSWORD_KEY);
 				}
-			} catch (e) {
+			} catch {
 				/* ignore storage failures */
 			}
 		},

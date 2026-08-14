@@ -4,6 +4,9 @@ A CAP (Node.js) service that fronts the [Workshop Hub](../workshop-hub/) REST AP
 for the Fiori chat app in [`../ui5/`](../ui5/). Nothing is stored locally — every
 read and action is forwarded to the Hub, which will eventually run in the cloud.
 
+This root project is the workshop starter and contains intentional
+`TODO(workshop)` defects. The finished reference is in [`../complete/cap/`](../complete/cap/).
+
 Folder | Purpose
 ---------|----------
 `srv/` | the `WorkshopHubService` model and handlers (`srv/lib/hub-client.js` talks to the Hub)
@@ -52,20 +55,19 @@ Actions (HTTP `POST` to `/workshop-hub/<action>`):
 - `uploadAvatar` — `{ "image": "<base64-encoded PNG/JPEG/WEBP bytes>" }` — store the current
   participant's avatar on the Hub (requires `register` first)
 - `startTask` — `{ "taskId": "register" }`
-- `completeTask` — `{ "taskId": "register", "message": "done" }`
 - `passCheckpoint` — `{ "taskId": "celebrate", "message": "🎉" }`
 - `reportFailure` — `{ "taskId": "chat", "message": "tests failed" }`
-- `sendChatMessage` — `{ "message": "hello hub" }`
-- `heartbeat` — `{}` — anonymous keep-alive ping (no registration required)
+- `sendChatMessage` — `{ "message": "hello hub", "replyToEventId": 42 }`
+- `heartbeat` — `{}` — send a heartbeat for the registered participant
 
-> The participant-scoped event actions (`uploadAvatar`, `startTask`, `completeTask`,
+> The participant-scoped event actions (`uploadAvatar`, `startTask`,
 > `passCheckpoint`, `reportFailure`, `sendChatMessage`) require `register` to be called
-> first (returns `412` otherwise). `heartbeat` is anonymous and can be sent any time.
+> first (returns `412` otherwise). `heartbeat` also requires registration.
 
 > Task completion is authored by the Hub itself after it validates the payload —
-> clients never self-report. Registering completes the `register` task, posting a
-> non-empty chat message completes `chat`, and uploading a valid image completes
-> `feature-avatar`.
+> clients never self-report. The six validations cover registration, attributed
+> heartbeat, non-empty chat, real multiline chat, valid avatar upload, and a reply
+> that references an existing chat event.
 
 
 ## Running in Docker

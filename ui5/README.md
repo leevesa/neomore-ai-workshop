@@ -8,13 +8,16 @@ This app has been turned into the minimal **Workshop Chat** participant app. It 
 single page that talks to the CAP `WorkshopHubService` over **OData V4**
 (`/workshop-hub`), which in turn forwards to the [Workshop Hub](../workshop-hub/).
 
+This root project is the workshop starter and contains intentional
+`TODO(workshop)` defects. The finished reference is in [`../complete/ui5/`](../complete/ui5/).
+
 - On first load a mandatory **Register** dialog asks for a team name and an optional
   team avatar (uploaded via the `uploadAvatar` action). The registration
   (`participantId` + `displayName`) is kept in `sessionStorage`, so a reload skips the
   dialog for the rest of the session.
 - The **Chat** page lists `chat.message.sent` events (sender name + avatar) and lets you
-  post new messages via the `sendChatMessage` action. A **heartbeat** button in the page
-  header sends an anonymous `heartbeat` on demand.
+    post multiline messages and replies via the `sendChatMessage` action. A **heartbeat**
+    button sends a participant-attributed heartbeat on demand.
 
 Key files: [`webapp/view/App.view.xml`](webapp/view/App.view.xml),
 [`webapp/view/fragment/RegisterDialog.fragment.xml`](webapp/view/fragment/RegisterDialog.fragment.xml),
@@ -23,7 +26,7 @@ Key files: [`webapp/view/App.view.xml`](webapp/view/App.view.xml),
 
 ### Running the chat app locally
 
-1. Start the Hub (`workshop-hub/`, port `8080`) and CAP (`cap/`, `npx cds-serve`, port `4004`).
+1. Start the Hub (`../workshop-hub/`, port `8080`) and CAP (`../cap/`, `npx cds-serve`, port `4004`).
 2. From this folder: `npm install`, then `npm run start-noflp` (serves on port `8081`).
    The dev server proxies `/workshop-hub` to `http://localhost:4004` (see `ui5.yaml`).
 

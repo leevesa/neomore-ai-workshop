@@ -55,9 +55,18 @@ workshop:
     - id: register
       title: Register your team
       description: Join the session with a team name in the chat app.
+    - id: heartbeat
+      title: Send a heartbeat
+      description: Fix the heartbeat flow so the Hub receives your participant identity.
     - id: chat
       title: Post to the chatboard
       description: Send your first message so the whole room can see it.
+    - id: multiline-message
+      title: Send a multiline message
+      description: Preserve at least two non-empty lines from the composer to the Hub and chatboard.
     - id: feature-avatar
       title: Add a team avatar
       description: Upload a profile picture for your team.
+    - id: reply-message
+      title: Reply to a message
+      description: Reply to an existing chat message while preserving its verified context.

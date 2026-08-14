@@ -1,7 +1,10 @@
 package com.neomore.workshophub.service;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 import org.springframework.data.domain.PageRequest;
@@ -87,6 +90,10 @@ public class WorkshopService {
     @Transactional
     public FeedItem publishEvent(PublishEventRequest request) {
         EventType eventType = EventType.fromWire(request.eventType());
+        if (eventType == EventType.TASK_COMPLETED) {
+            throw new IllegalArgumentException(
+                    "task.completed events are authored by the Workshop Hub");
+        }
         Instant now = Instant.now();
 
         String displayName = request.displayName();
@@ -108,15 +115,28 @@ public class WorkshopService {
         event.setTaskId(request.taskId());
         event.setMessage(request.message());
         event.setStatus(request.status());
-        event.setMetadata(serializeMetadata(request));
+        Map<String, Object> metadata = request.metadata();
+        boolean reply = false;
+        if (eventType == EventType.CHAT_MESSAGE_SENT) {
+            metadata = validateReplyMetadata(metadata);
+            reply = metadata != null && metadata.containsKey("replyToEventId");
+        }
+        event.setMetadata(serializeMetadata(metadata));
 
         FeedItem item = persistAndBroadcast(event);
 
-        // Hub is the source of truth: a real chat message completes the 'chat' task.
         if (eventType == EventType.CHAT_MESSAGE_SENT
                 && request.message() != null && !request.message().isBlank()) {
             taskVerificationService.markCompleted(request.participantId(), displayName,
                     "chat", "Posted to the chatboard");
+            if (hasMultipleNonBlankLines(request.message())) {
+                taskVerificationService.markCompleted(request.participantId(), displayName,
+                        "multiline-message", "Sent a multiline chat message");
+            }
+            if (reply) {
+                taskVerificationService.markCompleted(request.participantId(), displayName,
+                        "reply-message", "Replied to a chat message");
+            }
         }
 
         return item;
@@ -133,6 +153,30 @@ public class WorkshopService {
                 EventType.PARTICIPANT_HEARTBEAT.wire(), null, "heartbeat", null, Instant.now(), null);
         feedBroadcaster.broadcast(item);
     }
+
+        /**
+         * Record a participant heartbeat and verify that the Hub observed it. The
+         * pulse remains ephemeral even though participant presence is updated.
+         */
+        @Transactional
+        public void recordHeartbeat(String participantId) {
+        if (participantId == null || participantId.isBlank()) {
+            throw new IllegalArgumentException("participantId is required");
+        }
+
+        Participant participant = participantRepository.findById(participantId)
+            .orElseThrow(() -> new NotFoundException(
+                "Unknown participant " + participantId));
+        Instant now = Instant.now();
+        participant.setLastHeartbeatAt(now);
+        participantRepository.save(participant);
+
+        FeedItem item = new FeedItem(null, participant.getId(), participant.getDisplayName(),
+            EventType.PARTICIPANT_HEARTBEAT.wire(), null, "heartbeat", null, now, null);
+        feedBroadcaster.broadcast(item);
+        taskVerificationService.markCompleted(participant.getId(), participant.getDisplayName(),
+            "heartbeat", "Sent a participant heartbeat");
+        }
 
     /**
      * Read the most recent feed items, newest first.
@@ -172,12 +216,52 @@ public class WorkshopService {
         return item;
     }
 
-    private String serializeMetadata(PublishEventRequest request) {
-        if (request.metadata() == null || request.metadata().isEmpty()) {
+    private Map<String, Object> validateReplyMetadata(Map<String, Object> metadata) {
+        if (metadata == null || !metadata.containsKey("replyToEventId")) {
+            return metadata;
+        }
+
+        long replyToEventId = parseReplyToEventId(metadata.get("replyToEventId"));
+        EventRecord target = eventRepository.findById(replyToEventId)
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "replyToEventId must reference an existing chat message"));
+        if (target.getEventType() != EventType.CHAT_MESSAGE_SENT) {
+            throw new IllegalArgumentException(
+                    "replyToEventId must reference an existing chat message");
+        }
+
+        Map<String, Object> enriched = new LinkedHashMap<>(metadata);
+        enriched.put("replyToEventId", replyToEventId);
+        enriched.put("replyToDisplayName", target.getDisplayName());
+        enriched.put("replyToMessage", target.getMessage());
+        return enriched;
+    }
+
+    private long parseReplyToEventId(Object value) {
+        if (!(value instanceof Number) && !(value instanceof String)) {
+            throw new IllegalArgumentException("replyToEventId must be a positive integer");
+        }
+        try {
+            long eventId = new BigDecimal(value.toString().trim()).longValueExact();
+            if (eventId <= 0) {
+                throw new IllegalArgumentException("replyToEventId must be a positive integer");
+            }
+            return eventId;
+        } catch (NumberFormatException | ArithmeticException ex) {
+            throw new IllegalArgumentException("replyToEventId must be a positive integer");
+        }
+    }
+
+    private boolean hasMultipleNonBlankLines(String message) {
+        return message.lines().filter(line -> !line.isBlank()).limit(2).count() == 2;
+    }
+
+    private String serializeMetadata(Map<String, Object> metadata) {
+        if (metadata == null || metadata.isEmpty()) {
             return null;
         }
         try {
-            return objectMapper.writeValueAsString(request.metadata());
+            return objectMapper.writeValueAsString(metadata);
         } catch (JacksonException ex) {
             throw new IllegalArgumentException("Invalid metadata: " + ex.getMessage());
         }

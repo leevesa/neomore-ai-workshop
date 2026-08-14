@@ -1,0 +1,64 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core"
+	xmlns:u="sap.ui.unified">
+	<Dialog
+		id="registerDialog"
+		title="{i18n>REGISTER_TITLE}"
+		contentWidth="22rem"
+		escapeHandler=".onRegisterEscape">
+		<content>
+			<VBox alignItems="Center" class="sapUiMediumMargin">
+				<core:Icon
+					src="sap-icon://account"
+					visible="{parts: [{path: 'view>/pendingAvatar'}, {path: 'view>/avatarUrl'}], formatter: '.formatShowAvatarPlaceholder'}"
+					size="3rem" />
+				<Avatar
+					src="{parts: [{path: 'view>/pendingAvatar'}, {path: 'view>/avatarUrl'}], formatter: '.formatAvatarPreviewSrc'}"
+					visible="{parts: [{path: 'view>/pendingAvatar'}, {path: 'view>/avatarUrl'}], formatter: '.formatHasAvatarPreview'}"
+					displaySize="L" />
+				<u:FileUploader
+					id="avatarUploader"
+					name="avatar"
+					buttonText="{i18n>REGISTER_EDIT_AVATAR}"
+					iconOnly="false"
+					icon="sap-icon://camera"
+					buttonOnly="true"
+					fileType="png,jpg,jpeg,webp"
+					mimeType="image/png,image/jpeg,image/webp"
+					sameFilenameAllowed="true"
+					change=".onAvatarSelected"
+					class="sapUiSmallMarginTop" />
+			</VBox>
+			<VBox class="sapUiMediumMarginBegin sapUiMediumMarginEnd sapUiMediumMarginBottom">
+				<Label text="{i18n>REGISTER_NAME_LABEL}" labelFor="registerName" required="true" />
+				<Input
+					id="registerName"
+					value="{view>/displayName}"
+					editable="{= !${view>/nameLocked} }"
+					placeholder="{i18n>REGISTER_NAME_PLACEHOLDER}"
+					submit=".onJoin" />
+				<Label
+					text="{i18n>REGISTER_PASSWORD_LABEL}"
+					labelFor="registerPassword"
+					class="sapUiSmallMarginTop" />
+				<Input
+					id="registerPassword"
+					type="Password"
+					value="{view>/password}"
+					placeholder="{i18n>REGISTER_PASSWORD_PLACEHOLDER}"
+					submit=".onJoin" />
+				<Text
+					text="{i18n>REGISTER_PASSWORD_HINT}"
+					class="sapUiTinyMarginTop sapUiContentLabelColor" />
+			</VBox>
+		</content>
+		<beginButton>
+			<Button
+				text="{i18n>REGISTER_BUTTON}"
+				type="Emphasized"
+				press=".onJoin"
+				enabled="{= !${view>/busy} }" />
+		</beginButton>
+	</Dialog>
+</core:FragmentDefinition>

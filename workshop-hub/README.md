@@ -58,7 +58,7 @@ WORKSHOP_PASSWORD=letmein docker compose up --build
 
 When a password is set:
 - Write calls (`POST`) must send header `X-Workshop-Password: letmein`.
-- The dashboard URL needs `&password=letmein` (because the browser/EventSource cannot send custom headers).
+- The dashboard prompts through browser Basic authentication (any username, shared password).
 - Read endpoints (`/feed`, `/feed/stream`, `/tasks`, `/health`) stay open so the dashboard can stream.
 
 ---
@@ -70,7 +70,10 @@ Base URL: `http://localhost:8080`
 | Method | Path | Purpose |
 | --- | --- | --- |
 | `POST` | `/participants` | Register a participant or team |
-| `POST` | `/events` | Publish a progress / heartbeat / chat / checkpoint event |
+| `POST` | `/heartbeat` | Emit an anonymous pulse or verify a known participant heartbeat |
+| `POST` | `/events` | Publish chat, task-start, checkpoint, or failure activity |
+| `POST` | `/participants/{participantId}/avatar` | Upload validated image bytes |
+| `GET` | `/participants/{participantId}/avatar` | Read a participant avatar |
 | `GET` | `/feed` | Read recent activity (newest first, `?limit=` optional) |
 | `GET` | `/feed/stream` | SSE stream of live events (used by the dashboard) |
 | `GET` | `/tasks` | Read the canonical task list |
@@ -87,6 +90,18 @@ Base URL: `http://localhost:8080`
 `participantId`, `displayName`, `eventType` (required), `taskId`, `message`, `status`,
 `metadata` (free-form object).
 
+The Hub rejects client-authored `task.completed` events. It authors completion
+events only after observing these six actions:
+
+| Task | Verified activity |
+| --- | --- |
+| `register` | Participant created with a valid display name |
+| `heartbeat` | `/heartbeat` receives a known participant ID |
+| `chat` | Nonblank `chat.message.sent` event |
+| `multiline-message` | Chat payload contains at least two nonblank real lines |
+| `feature-avatar` | Valid PNG, JPEG, or WEBP bytes uploaded |
+| `reply-message` | Reply metadata references an existing chat event |
+
 ---
 
 ## 5. Example flow (curl)
@@ -100,12 +115,17 @@ curl -X POST http://localhost:8080/participants \
   -H 'content-type: application/json' \
   -d '{"displayName":"Team A"}'
 
-# 3. Publish a completed task (use the participantId from step 2)
+# 3. Send an attributed heartbeat (use the participantId from step 2)
+curl -X POST http://localhost:8080/heartbeat \
+  -H 'content-type: application/json' \
+  -d '{"participantId":"<id>"}'
+
+# 4. Send a chat message; the Hub completes the chat task
 curl -X POST http://localhost:8080/events \
   -H 'content-type: application/json' \
-  -d '{"participantId":"<id>","eventType":"task.completed","taskId":"connect"}'
+  -d '{"participantId":"<id>","eventType":"chat.message.sent","message":"Hello room"}'
 
-# 4. Read the feed (newest first)
+# 5. Read the feed (newest first)
 curl http://localhost:8080/feed
 ```
 
@@ -139,8 +159,11 @@ boundary that forwards validated events to this hub. During the codelab particip
 CAP to call:
 
 1. `POST /participants` when a team name is entered.
-2. `POST /events` when they start/complete tasks, send chat, or pass a
-   checkpoint — including a periodic `participant.heartbeat`.
+2. `POST /heartbeat` with the registered participant ID for presence.
+3. `POST /events` when they send chat, start work, or pass a checkpoint.
+
+Clients never post `task.completed`; completion is a Hub-authored result of valid
+endpoint activity.
 
 CAP reads the hub location from its own configuration (e.g. `WORKSHOP_HUB_URL`,
 `WORKSHOP_PARTICIPANT_TOKEN`/password, `WORKSHOP_DRY_RUN`). That CAP

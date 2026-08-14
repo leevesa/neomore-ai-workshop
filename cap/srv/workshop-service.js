@@ -23,10 +23,9 @@ class WorkshopHubService extends cds.ApplicationService {
     this.on('register', (req) => this.doRegister(req))
     this.on('uploadAvatar', (req) => this.doUploadAvatar(req))
     this.on('startTask', (req) => this.sendEvent('task.started', req, { taskId: req.data.taskId }))
-    this.on('completeTask', (req) => this.sendEvent('task.completed', req, { taskId: req.data.taskId, message: req.data.message, status: 'completed' }))
     this.on('passCheckpoint', (req) => this.sendEvent('checkpoint.passed', req, { taskId: req.data.taskId, message: req.data.message }))
     this.on('reportFailure', (req) => this.sendEvent('verification.failed', req, { taskId: req.data.taskId, message: req.data.message, status: 'failed' }))
-    this.on('sendChatMessage', (req) => this.sendEvent('chat.message.sent', req, { message: req.data.message }))
+    this.on('sendChatMessage', (req) => this.sendEvent('chat.message.sent', req, chatFields(req.data)))
     this.on('heartbeat', (req) => this.doHeartbeat(req))
     this.on('health', (req) => this.guard(req, () => hub.health(hubPassword(req))))
 
@@ -98,9 +97,13 @@ class WorkshopHubService extends cds.ApplicationService {
     return this.connectionRow()
   }
 
-  /** Send an anonymous heartbeat — no participant identity, no registration required. */
+  /** Send a heartbeat attributed to the current participant. */
   async doHeartbeat(req) {
-    await this.guard(req, () => hub.sendHeartbeat(hubPassword(req)))
+    if (!this.connection.participantId) {
+      return req.reject(412, 'Not registered yet — call register(displayName) first')
+    }
+    // TODO(workshop): Attribute the heartbeat so the Hub can verify who sent it.
+    await this.guard(req, () => hub.sendHeartbeat(undefined, hubPassword(req)))
   }
 
   /**
@@ -117,7 +120,8 @@ class WorkshopHubService extends cds.ApplicationService {
       eventType,
       taskId: fields.taskId || null,
       message: fields.message || null,
-      status: fields.status || null
+      status: fields.status || null,
+      metadata: fields.metadata || null
     }
     const item = await this.guard(req, () => hub.publishEvent(event, hubPassword(req)))
     return toFeedRow(item)
@@ -147,6 +151,11 @@ class WorkshopHubService extends cds.ApplicationService {
       return req.reject(status, err.message)
     }
   }
+}
+
+function chatFields(data) {
+  // TODO(workshop): Forward the selected reply target as event metadata.
+  return { message: data.message }
 }
 
 function toFeedRow(item) {
@@ -225,3 +234,4 @@ function applyPaging(items, limit) {
 }
 
 module.exports = WorkshopHubService
+module.exports.chatFields = chatFields

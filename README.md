@@ -6,13 +6,15 @@ Let's do agentic coding using [GitHub Copilot](https://docs.github.com/copilot/a
 
 ## Background
 
-Story needed for Neomore specific customer needs work done ..
+Participants improve a live workshop chat application built with SAPUI5 and CAP.
+A shared Spring Boot Workshop Hub validates real API activity and projects team
+progress, messages, avatars, and heartbeats on a facilitator dashboard.
 
 ## Workshop Objectives
 
-- Build applications using GitHub Copilot Agent Mode.
-- Add custom instruction to GitHub Copilot so that you have more control over GitHub Copilot.
-- Add various MCP servers to GitHub Copilot so that you build the applications more precisely.
+- Debug and enhance a multi-service application with GitHub Copilot Agent Mode.
+- Trace contracts across UI5, CAP, and Java before making focused changes.
+- Validate behavior with automated tests and Hub-observed API activity.
 
 ## Prerequisites
 
@@ -42,7 +44,7 @@ If you prefer a local containerized setup, use the files in the repository root.
     docker compose -f compose.workshop.yaml down
     ```
 
-If you want to run the complete containerization sample apps, use:
+To run the finished Workshop Hub, CAP, and UI5 reference stack, use:
 
 ```bash
 docker compose -f complete/compose.yaml up --build -d
@@ -62,17 +64,16 @@ This is a self-paced workshop by following the links below:
 | Step                               | Link                                                    |
 |------------------------------------|---------------------------------------------------------|
 | 00: Development Environment        | [00-setup.md](./docs/00-setup.md)                       |
-| 01: Java Backend                   | [03-java.md](./docs/03-java.md)                         |
+| 01: 60-Minute Chat Workshop        | [01-chat-workshop.md](./docs/01-chat-workshop.md)       |
 | 02: Containerization               | [05-containerization.md](./docs/05-containerization.md) |
 
-## Complete Samples
+## Workshop Layout
 
-Check out the complete example of each application. They're also vibe-coded with GitHub Copilot, therefore, they might not be perfect, and you don't have to follow the app.
-
-| Language            | Application | Location                             |
-|---------------------|-------------|--------------------------------------|
-| Java Backend        | Spring Boot | [java](./complete/java/)             |
-| Containerization    | Container   | [containerization](./complete/)      |
+| Location | Purpose |
+|----------|---------|
+| [`ui5/`](./ui5/) and [`cap/`](./cap/) | Runnable workshop starters with intentional TODO defects |
+| [`workshop-hub/`](./workshop-hub/) | Server-side task validation and facilitator dashboard |
+| [`complete/`](./complete/) | Finished CAP/UI5 reference and aggregate Compose stack |
 
 ## Read More...
 

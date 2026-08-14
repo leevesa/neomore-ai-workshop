@@ -7,3 +7,35 @@
 /* =========================================================== */
 /* Styles					                                   */
 /* =========================================================== */
+
+.workshopMessageRow,
+.workshopMessageHeader {
+	width: 100%;
+}
+
+.workshopMessageContent,
+.workshopComposerField,
+.workshopReplyComposerText {
+	min-width: 0;
+}
+
+.workshopMessageContent {
+	flex: 1;
+}
+
+/* TODO(workshop): Preserve message whitespace without breaking long words. */
+
+.workshopReplyReference,
+.workshopReplyComposer {
+	border-left: 0.1875rem solid var(--sapContent_ForegroundBorderColor, #89919a);
+	background: var(--sapGroup_ContentBackground, #f5f6f7);
+	padding: 0.375rem 0.5rem;
+}
+
+.workshopReplyTitle {
+	font-weight: 600;
+}
+
+.workshopReplyComposerText {
+	flex: 1;
+}

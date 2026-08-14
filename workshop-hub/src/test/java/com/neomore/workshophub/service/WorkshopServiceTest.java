@@ -89,9 +89,9 @@ class WorkshopServiceTest {
         when(participantRepository.findById("p-1")).thenReturn(Optional.of(participant));
 
         FeedItem item = service.publishEvent(new PublishEventRequest(
-                "p-1", null, "task.completed", "cap-backend", null, "ok", Map.of("attempt", 1)));
+            "p-1", null, "task.started", "cap-backend", null, "ok", Map.of("attempt", 1)));
 
-        assertThat(item.eventType()).isEqualTo("task.completed");
+        assertThat(item.eventType()).isEqualTo("task.started");
         assertThat(item.displayName()).isEqualTo("Team A");
         assertThat(item.metadata()).contains("attempt");
         verify(participantRepository).save(participant);
@@ -131,6 +131,86 @@ class WorkshopServiceTest {
                 eq("chat"), anyString());
     }
 
+            @Test
+            void multilineChatMessageCompletesBothChatTasks() {
+            Participant participant = new Participant("p-1", "Team A", Instant.parse("2026-06-22T10:00:00Z"));
+            when(participantRepository.findById("p-1")).thenReturn(Optional.of(participant));
+
+            service.publishEvent(new PublishEventRequest(
+                "p-1", null, "chat.message.sent", null, "first line\nsecond line", null, null));
+
+            verify(taskVerificationService).markCompleted(eq("p-1"), eq("Team A"),
+                eq("chat"), anyString());
+            verify(taskVerificationService).markCompleted(eq("p-1"), eq("Team A"),
+                eq("multiline-message"), anyString());
+            }
+
+            @Test
+            void literalBackslashNDoesNotCompleteMultilineTask() {
+            Participant participant = new Participant("p-1", "Team A", Instant.parse("2026-06-22T10:00:00Z"));
+            when(participantRepository.findById("p-1")).thenReturn(Optional.of(participant));
+
+            service.publishEvent(new PublishEventRequest(
+                "p-1", null, "chat.message.sent", null, "first line\\nsecond line", null, null));
+
+            verify(taskVerificationService, never()).markCompleted(anyString(), any(),
+                eq("multiline-message"), anyString());
+            }
+
+            @Test
+            void validReplyCompletesTaskAndStoresTrustedContext() {
+            Participant participant = new Participant("p-1", "Team A", Instant.parse("2026-06-22T10:00:00Z"));
+            EventRecord target = new EventRecord();
+            target.setId(41L);
+            target.setEventType(EventType.CHAT_MESSAGE_SENT);
+            target.setDisplayName("Team B");
+            target.setMessage("Original message");
+            when(participantRepository.findById("p-1")).thenReturn(Optional.of(participant));
+            when(eventRepository.findById(41L)).thenReturn(Optional.of(target));
+
+            FeedItem item = service.publishEvent(new PublishEventRequest(
+                "p-1", null, "chat.message.sent", null, "My reply", null,
+                Map.of("replyToEventId", "41")));
+
+            assertThat(item.metadata()).contains("\"replyToEventId\":41")
+                .contains("\"replyToDisplayName\":\"Team B\"")
+                .contains("\"replyToMessage\":\"Original message\"");
+            verify(taskVerificationService).markCompleted(eq("p-1"), eq("Team A"),
+                eq("reply-message"), anyString());
+            }
+
+            @Test
+            void replyRejectsMissingOrNonChatTargetBeforePersistence() {
+            Participant participant = new Participant("p-1", "Team A", Instant.parse("2026-06-22T10:00:00Z"));
+            EventRecord nonChatTarget = new EventRecord();
+            nonChatTarget.setEventType(EventType.TASK_STARTED);
+            when(participantRepository.findById("p-1")).thenReturn(Optional.of(participant));
+            when(eventRepository.findById(41L)).thenReturn(Optional.empty());
+            when(eventRepository.findById(42L)).thenReturn(Optional.of(nonChatTarget));
+
+            assertThatThrownBy(() -> service.publishEvent(new PublishEventRequest(
+                "p-1", null, "chat.message.sent", null, "Reply", null,
+                Map.of("replyToEventId", 41))))
+                .isInstanceOf(IllegalArgumentException.class);
+            assertThatThrownBy(() -> service.publishEvent(new PublishEventRequest(
+                "p-1", null, "chat.message.sent", null, "Reply", null,
+                Map.of("replyToEventId", 42))))
+                .isInstanceOf(IllegalArgumentException.class);
+
+            verify(eventRepository, never()).save(any());
+            }
+
+            @Test
+            void clientAuthoredTaskCompletionIsRejected() {
+            assertThatThrownBy(() -> service.publishEvent(new PublishEventRequest(
+                "p-1", null, "task.completed", "chat", null, "completed", null)))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("authored by the Workshop Hub");
+
+            verify(participantRepository, never()).findById(anyString());
+            verify(eventRepository, never()).save(any());
+            }
+
     @Test
     void recordHeartbeatBroadcastsWithoutPersisting() {
         service.recordHeartbeat();
@@ -140,6 +220,41 @@ class WorkshopServiceTest {
         assertThat(itemCaptor.getValue().eventType()).isEqualTo("participant.heartbeat");
         assertThat(itemCaptor.getValue().participantId()).isNull();
         verify(eventRepository, never()).save(any());
+    }
+
+    @Test
+    void participantHeartbeatUpdatesPresenceAndCompletesTask() {
+        Participant participant = new Participant("p-1", "Team A", Instant.parse("2026-06-22T10:00:00Z"));
+        when(participantRepository.findById("p-1")).thenReturn(Optional.of(participant));
+
+        service.recordHeartbeat("p-1");
+
+        verify(participantRepository).save(participant);
+        ArgumentCaptor<FeedItem> itemCaptor = ArgumentCaptor.forClass(FeedItem.class);
+        verify(feedBroadcaster).broadcast(itemCaptor.capture());
+        assertThat(itemCaptor.getValue().participantId()).isEqualTo("p-1");
+        verify(taskVerificationService).markCompleted("p-1", "Team A", "heartbeat",
+                "Sent a participant heartbeat");
+        verify(eventRepository, never()).save(any());
+    }
+
+    @Test
+    void participantHeartbeatRejectsMissingIdentity() {
+        assertThatThrownBy(() -> service.recordHeartbeat(" "))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("participantId is required");
+    }
+
+    @Test
+    void participantHeartbeatRejectsUnknownIdentity() {
+        when(participantRepository.findById("ghost")).thenReturn(Optional.empty());
+
+        assertThatThrownBy(() -> service.recordHeartbeat("ghost"))
+                .isInstanceOf(NotFoundException.class);
+
+        verify(feedBroadcaster, never()).broadcast(any());
+        verify(taskVerificationService, never()).markCompleted(anyString(), any(),
+                eq("heartbeat"), anyString());
     }
 
     @Test
