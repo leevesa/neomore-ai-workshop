@@ -60,7 +60,7 @@ cd ui5
 docker compose up --build
 ```
 
-Open `http://localhost:8081`. Keep the shared Workshop Hub dashboard open so you
+Open `http://localhost:8081/index.html`. Keep the shared Workshop Hub dashboard open so you
 can see each task complete:
 
 https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io/dashboard/index.html
@@ -112,7 +112,7 @@ container logs before editing source code.
 
 ## Task 2: Send An Identified Heartbeat
 
-The heart button currently reaches the Hub, but the request is anonymous. Update
+The heart button in the top right corner sends a heart to the hub. It currently reaches the Hub, but the request is anonymous. Update
 CAP so the Hub can identify your team.
 
 ### Reproduce The Problem
@@ -138,14 +138,21 @@ participant ID to the existing Hub client without changing anonymous Hub support
 Keep the pre-registration error and run the CAP tests after the change.
 ```
 
-### Validate
+### Validate(AI can do this for you in sandbox)
 
 ```bash
 cd cap
 npm test
 ```
 
+Inspect the code diff that the agent generated, accept if it looks correct and tests pass.
+
 Restart or rebuild the local stack if needed, then choose the heart button again.
+
+in ui5 folder:
+```bash
+docker compose up --build
+```
 
 ### Expected Result
 
