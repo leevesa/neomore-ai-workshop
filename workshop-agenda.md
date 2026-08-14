@@ -53,7 +53,7 @@ curl -fsS "$WORKSHOP_HUB_URL/actuator/health"
 curl -fsS "$WORKSHOP_HUB_URL/tasks"
 ```
 
-Start your local UI5 and CAP containers:
+Start your local UI5 and CAP containers first time startup can be long, be patient:
 
 ```bash
 cd ui5
@@ -147,13 +147,18 @@ npm test
 
 Inspect the code diff that the agent generated, accept if it looks correct and tests pass.
 
-Restart or rebuild the local stack if needed, then refresh the existing browser tab.
-The browser restores its saved participant ID into the new CAP process, so you
-should not need to register a second team. Choose the heart button again.
+Restart or rebuild the local stack:
 
-in ui5 folder:
+in the active docker CLI:
+ctrl + c to stop the current docker instance
+
 ```bash
 docker compose up --build
+```
+
+You know that both ui5 and cap backend are ready when you get a message from "ui5-cap-1" in the console, that looks something like this
+```bash
+ui5-cap-1  | {"level":"info","logger":"odata","correlation_id":"1ea08fc8-a7fc-4cd6-95e4-389b60094889","host":"localhost:4004"´...
 ```
 
 ### Expected Result
@@ -183,10 +188,12 @@ message handling.
 
 ### Example Prompt
 
+Change to ASK mode
+
 ```text
 Trace one chat message from ui5/webapp/controller/App.controller.js through the
 CAP sendChatMessage action and into the Workshop Hub event request. Explain the
-payload and validation path. Do not change code.
+payload and validation path.
 ```
 
 Do not continue until `register`, `heartbeat`, and `chat` are complete.
@@ -212,6 +219,7 @@ Fix both transport and display behavior.
 
 ### Example Prompt
 
+Activate AGENT mode for this prompt:
 ```text
 Preserve multiline chat messages in the UI5 starter. Keep trimming whitespace at
 the beginning and end, but retain internal CR/LF characters. Update the focused
@@ -220,7 +228,9 @@ needed to preserve line breaks while wrapping long words. Run the UI5 tests and
 build. Do not change the CAP or Hub contracts.
 ```
 
-### Validate
+Since this should be an UI5 change, you do not need to restart container.
+
+### Validate(AI assisted recommended)
 
 ```bash
 cd ui5
@@ -247,8 +257,9 @@ existing normalized data URL to the CAP upload action.
 
 1. Reopen your team profile.
 2. Select a PNG, JPEG, or WEBP image.
-3. Save the profile.
-4. Confirm that the preview changes locally but `feature-avatar` remains
+3. Save the profile by pressing join.
+4. Refresh the page.
+4. Confirm that the picture is unchagend and `feature-avatar` remains
    incomplete.
 
 ### Investigate
@@ -261,6 +272,7 @@ existing normalized data URL to the CAP upload action.
 
 ### Example Prompt
 
+AGENT mode:
 ```text
 The UI5 avatar preview works, but the image never reaches CAP. In
 ui5/webapp/controller/App.controller.js, complete _maybeUploadAvatar by removing
@@ -269,7 +281,7 @@ existing /uploadAvatar(...) action. Mark the avatar uploaded only after success.
 Preserve the current normalization and error handling, then run the UI5 build.
 ```
 
-### Validate
+### Validate(AI assisted recommended)
 
 ```bash
 cd ui5
@@ -319,7 +331,7 @@ test proving that a reply forwards only the target event ID. Preserve ordinary
 chat and existing reply cleanup, then run CAP tests and the UI5 build.
 ```
 
-### Validate
+### Validate(Ai assisted automatically)
 
 ```bash
 cd cap
@@ -329,6 +341,15 @@ cd ../ui5
 npm run lint
 npm run build
 ```
+
+container needs restarting because we modified CAP backend:
+
+crtl + c in docker terminal, then 
+```bash
+docker compose up --build
+```
+
+wait for everything to restart, refresh the chatpage, reconnect should happen automatically.
 
 Reply to an existing message again. Then cancel a second reply and send an ordinary
 message to check both paths.
@@ -355,43 +376,12 @@ Your team should now show `6/6` on the Workshop Hub dashboard.
 5. Refresh and confirm that your avatar still loads.
 6. Reply to a message, then cancel a reply and send an ordinary message.
 
-### Automated Checks
+### Thank you!
+Thank you for your participation on the workshop hub. This was the first in the AI workshop series.
+You can expect Office 365 workshop next.
 
-```bash
-cd cap
-npm test
+Please leave some anonymous feedback at: https://forms.cloud.microsoft/e/kB1xBajVeG
 
-cd ../ui5
-npm run lint
-npm test
-npm run build
-```
-
-### Compare With The Completed Reference
-
-The finished source should match the behavior and focused implementation in these
-reference files:
-
-| Your file | Completed reference |
-| --- | --- |
-| `cap/srv/workshop-service.js` | `complete/cap/srv/workshop-service.js` |
-| `cap/test/hub-contract.test.js` | `complete/cap/test/hub-contract.test.js` |
-| `ui5/webapp/controller/App.controller.js` | `complete/ui5/webapp/controller/App.controller.js` |
-| `ui5/webapp/util/chat.js` | `complete/ui5/webapp/util/chat.js` |
-| `ui5/webapp/test/unit/util/chat.js` | `complete/ui5/webapp/test/unit/util/chat.js` |
-| `ui5/webapp/view/App.view.xml` | `complete/ui5/webapp/view/App.view.xml` |
-| `ui5/webapp/css/styles.less` | `complete/ui5/webapp/css/styles.less` |
-| `ui5/webapp/css/styles.css` (generated by the build) | `complete/ui5/webapp/css/styles.css` |
-
-Use a focused diff if a task behaves differently:
-
-```bash
-diff -u cap/srv/workshop-service.js complete/cap/srv/workshop-service.js
-diff -u ui5/webapp/controller/App.controller.js complete/ui5/webapp/controller/App.controller.js
-```
-
-Do not replace whole starter folders with `complete/`. Review each remaining
-difference and make sure you understand why it is needed.
 
 ## Recovery: Local Hub
 
