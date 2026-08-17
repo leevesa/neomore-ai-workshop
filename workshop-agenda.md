@@ -17,9 +17,7 @@ marks six tasks complete:
 
 Allow the final 5 minutes for validation. When you finish, the source in `cap/`
 and `ui5/` should behave like the reference implementation in `complete/cap/` and
-`complete/ui5/`.
-
-## How The App Works
+`complete/ui5/`.## How The App Works
 
 ```mermaid
 flowchart LR
@@ -89,8 +87,37 @@ ask Copilot to verify them. Name the relevant files or functions and include exa
 errors. Keep each prompt focused on one task.
 
 Correct Copilot early if needed, and start a new chat for unrelated work. Review every
-diff and run the requested checks. At each Draft Your Prompt checkpoint, **write
-your prompt before reading the example**; use the example only to compare or get unstuck.
+diff and run the requested checks. At each Draft Your Prompt checkpoint, run your
+`/draft-prompt` command (created below) and **fill in your own evidence before reading
+the example**; use the example only to compare or get unstuck.
+
+### Create A Reusable Task Prompt
+
+The Draft Your Prompt checklist repeats on every task, so capture it once as a
+reusable prompt file. In the Chat view, type `/create-prompt` and describe the
+drafting checklist above, or create `.github/prompts/draft-prompt.prompt.md` by hand:
+
+```markdown
+---
+description: Draft a bounded workshop task prompt from collected evidence
+agent: agent
+---
+Draft a single focused prompt for one workshop task using the evidence below.
+
+- Observed: ${input:observed:What happens now}
+- Expected: ${input:expected:What should happen}
+- Files: ${input:files:Files or functions to inspect}
+- Constraints: ${input:constraints:Behavior that must not break}
+- Validate: ${input:validate:Test or build command plus one manual check}
+
+Keep the prompt to one task. Name exact files and errors. Do not change code
+outside the constraints.
+```
+
+Invoke it from the chat input with `/draft-prompt` and fill the inputs from your
+investigation. Use this command at every Draft Your Prompt checkpoint below, then
+compare your generated prompt with the task's example. You will commit it together
+with the project instructions in the Set Up Project Instructions step.
 
 ### Official Guidance
 
@@ -100,6 +127,9 @@ This method applies the following official documentation:
 - [Best practices for using GitHub Copilot](https://docs.github.com/en/copilot/get-started/best-practices)
 - [Best practices for using AI in VS Code](https://code.visualstudio.com/docs/agents/best-practices)
 - [Build with agents in VS Code](https://code.visualstudio.com/docs/agents/overview)
+- [Use custom instructions in VS Code](https://code.visualstudio.com/docs/copilot/customization/custom-instructions)
+- [Use prompt files in VS Code](https://code.visualstudio.com/docs/copilot/customization/prompt-files)
+- [Use custom agents in VS Code](https://code.visualstudio.com/docs/copilot/customization/custom-chat-modes)
 
 The prompts below are starting points. Add error messages or observed behavior
 when you have them.
@@ -163,6 +193,50 @@ Open `http://localhost:8081/index.html`. Keep the shared Workshop Hub dashboard
 open so you can see each task complete:
 
 https://neomore-workshop-hub.politegrass-3dc51b12.northeurope.azurecontainerapps.io/dashboard/index.html
+
+## Set Up Project Instructions
+
+Before Task 1, teach Copilot the rules of this repository once so every later prompt
+is grounded without repeating yourself.
+
+Generate a starting file with `/init` in the Chat view, or create
+`.github/copilot-instructions.md` by hand with the project-wide rules:
+
+```markdown
+# Workshop project rules
+
+- Work only in the root `cap/` and `ui5/` folders.
+- Never modify `workshop-hub/`; it is the external system that verifies your work.
+- Treat `complete/` as read-only reference code.
+- Never commit the workshop password or other credentials.
+- Prefer the smallest focused change and preserve existing behavior.
+```
+
+Add a CAP-scoped file at `.github/instructions/cap.instructions.md` for rules that
+only apply to the service code. The `applyTo` glob attaches it automatically when
+Copilot works on CAP files:
+
+```markdown
+---
+applyTo: 'cap/**'
+---
+- The CAP service fronts the Spring Workshop Hub; handlers call it through
+  `srv/lib/hub-client.js`.
+- Thread the workshop password from `req` into every hub call with `hubPassword(req)`.
+- Do not name a service method after a CAP operation; CAP auto-binds it and calls it
+  as `(params, req)`. Use distinct internal names such as `doRegister` and `sendEvent`.
+```
+
+Confirm the rules are active: ask a short question in Ask mode and check that the
+files appear in the response's References section. Then commit the instructions and
+the `/draft-prompt` prompt as their own change:
+
+```bash
+cd "$(git rev-parse --show-toplevel)"
+git add .github/
+git diff --cached
+git commit -m "chore: add Copilot project instructions and task prompt"
+```
 
 ## Task 1: Register Your Team
 
@@ -549,6 +623,41 @@ Run the CAP tests, UI5 lint, and UI5 build. Rebuild the containers, send a reply
 then cancel a second reply and send an ordinary message. Confirm both paths on the
 dashboard.
 
+### Build A Prompt Optimizer Agent
+
+Ask and Agent mode already cover read-only questions and editing. Instead, build a custom agent that does
+something the built-in modes do not: a reusable prompt optimizer that sharpens your
+draft before you run it.
+
+Type `/create-agent` in the Chat view, or create
+`.github/agents/prompt-optimizer.agent.md` by hand. It is read-only, so it can read
+the code to ground your prompt but never edits, and it hands off to the built-in
+Agent mode to run the result:
+
+```markdown
+---
+description: Sharpen a draft workshop prompt before you run it
+tools: ['search', 'codebase', 'usages']
+handoffs:
+  - label: Run the optimized prompt
+    agent: agent
+    prompt: Run the optimized prompt above and make the change.
+---
+Improve the draft prompt I give you. Do not implement the change.
+
+- Ground each claim in real files and symbols, and flag any guess to verify.
+- Make sure it states the observed and expected behavior, the files to touch, the
+  constraints that must not break, and one validation command.
+- Cut vague or redundant wording and keep it to a single task.
+
+Return only the rewritten prompt.
+```
+
+The handoff target `agent` is the built-in Agent mode. Draft the reply change with
+`/draft-prompt`, switch to the Prompt Optimizer agent to refine it, then use the
+handoff button to run the optimized prompt in Agent mode. You can reuse this agent on
+any task.
+
 ### Draft Your Prompt
 
 Before reading the example, combine the UI5 state evidence, CAP metadata boundary,
@@ -557,10 +666,10 @@ change crosses UI5 and CAP, so plan it before implementation.
 
 ### Example Prompt
 
-**Mode: Plan, then Agent**
+**Mode: Prompt Optimizer agent, then Agent mode**
 
-Submit the prompt in Plan mode. Review the proposed files and checks, then hand the
-approved plan to Agent mode for implementation.
+Refine the draft in your Prompt Optimizer agent, then use the handoff to run the
+optimized prompt in Agent mode.
 
 ```text
 The reply preview works, but the selected event ID is lost. Plan the smallest changes
@@ -598,6 +707,7 @@ After the CAP and UI5 checks pass and the Hub marks `reply-message` complete:
 ```bash
 cd "$(git rev-parse --show-toplevel)"
 git add -p cap/ ui5/
+git add .github/agents/
 git diff --cached
 git commit -m "feat: propagate chat reply metadata"
 ```
@@ -619,6 +729,9 @@ Your team should now show `6/6` on the Workshop Hub dashboard.
 
 Thank you for participating in the Workshop Hub. This was the first workshop in the
 AI series. The next workshop will focus on Office 365.
+
+The project instructions, `/draft-prompt` prompt, and prompt optimizer agent you
+built are reusable in your own repositories.
 
 Please leave some anonymous feedback at: https://forms.cloud.microsoft/e/kB1xBajVeG
 
